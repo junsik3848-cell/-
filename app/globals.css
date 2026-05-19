@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #131313;
+  --color-surface: #131313;
+  --color-surface-dim: #131313;
+  --color-surface-bright: #3a3939;
+  --color-surface-container-lowest: #0e0e0e;
+  --color-surface-container-low: #1c1b1b;
+  --color-surface-container: #201f1f;
+  --color-surface-container-high: #2a2a2a;
+  --color-surface-container-highest: #353534;
+  --color-on-surface: #e5e2e1;
+  --color-on-surface-variant: #b9cbc1;
+  --color-outline: #83958c;
+  --color-outline-variant: #3a4a43;
+  --color-surface-tint: #00e1ab;
+  --color-primary: #fbfffa;
+  --color-on-primary: #003828;
+  --color-primary-container: #00ffc2;
+  --color-primary-fixed: #36ffc4;
+  --color-primary-fixed-dim: #00e1ab;
+  --color-secondary: #aecdc5;
+  --color-secondary-container: #2f4c46;
+  --color-on-secondary-container: #9cbcb4;
+  --color-tertiary-container: #e0e1e7;
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-surface-variant: #353534;
+  --color-on-background: #e5e2e1;
+  --color-mint: #00e1ab;
+
+  --font-montserrat: var(--font-montserrat-var), 'Montserrat', sans-serif;
+  --font-jakarta: var(--font-jakarta-var), 'Plus Jakarta Sans', sans-serif;
+
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #131313;
+  color: #e5e2e1;
+  font-family: var(--font-jakarta-var), 'Plus Jakarta Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-brand {
+  font-family: var(--font-montserrat-var), 'Montserrat', sans-serif;
+}
+
+.glass-panel {
+  background: rgba(32, 31, 31, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card {
+  background: rgba(32, 31, 31, 0.4);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.glow-mint {
+  box-shadow: 0 0 20px rgba(0, 225, 171, 0.2);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
