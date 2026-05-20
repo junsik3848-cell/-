@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__supabase__confirm_cost",
+      "mcp__supabase__get_project_url",
+      "Bash(npm run *)",
+      "Bash(Remove-Item \"c:\\\\Users\\\\jun_s\\\\Desktop\\\\LUNKER2\\\\middleware.ts\" -Force)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__get_publishable_keys",
+      "mcp__supabase__apply_migration",
+      "Bash(vercel env *)",
+      "Bash(vercel --prod)"
+    ]
+  }
+}
