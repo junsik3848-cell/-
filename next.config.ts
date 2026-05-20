@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
       { hostname: "picsum.photos" },
     ],
   },
+  async redirects() {
+    return [
+      { source: "/", destination: "/login", permanent: false },
+    ];
+  },
 };
 
 export default nextConfig;

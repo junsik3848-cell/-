@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { SettingsIcon, LogOutIcon } from "@/components/icons";
 import { MOCK_POSTS, MOCK_MARKET_POSTS } from "@/lib/mock-data";
@@ -22,8 +23,14 @@ const TABS = [
 ];
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [tab, setTab] = useState("posts");
   const [showSettings, setShowSettings] = useState(false);
+
+  function handleLogout() {
+    document.cookie = "lunker_auth=; path=/; max-age=0";
+    router.push("/login");
+  }
 
   return (
     <div className="min-h-screen bg-background max-w-md mx-auto">
@@ -162,9 +169,9 @@ export default function ProfilePage() {
               계정 설정
             </button>
             <div className="h-px bg-outline-variant/30 my-1" />
-            <Link href="/login" className="w-full text-left px-4 py-3 text-sm text-error hover:bg-surface-container transition-colors flex items-center gap-3">
+            <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-sm text-error hover:bg-surface-container transition-colors flex items-center gap-3">
               <LogOutIcon size={16} />로그아웃
-            </Link>
+            </button>
           </div>
         </>
       )}

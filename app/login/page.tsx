@@ -1,6 +1,15 @@
-import Link from "next/link";
+"use client";
+
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  function handleGoogleLogin() {
+    document.cookie = "lunker_auth=true; path=/; max-age=604800";
+    router.push("/feed");
+  }
+
   return (
     <main className="relative min-h-screen flex flex-col overflow-hidden bg-background">
       {/* 배경 이미지 */}
@@ -10,86 +19,33 @@ export default function LoginPage() {
           alt=""
           className="w-full h-full object-cover opacity-30"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background/90" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/40 to-background" />
       </div>
 
-      {/* 헤더 */}
-      <header className="relative z-10 p-5 pt-12">
-        <Link
-          href="/feed"
-          className="w-11 h-11 flex items-center justify-center rounded-full glass-panel text-on-surface hover:text-surface-tint transition-colors"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12" />
-            <polyline points="12 19 5 12 12 5" />
-          </svg>
-        </Link>
-      </header>
-
       {/* 메인 콘텐츠 */}
-      <div className="relative z-10 flex-1 flex flex-col justify-center items-center px-5 w-full max-w-md mx-auto pb-12">
+      <div className="relative z-10 flex-1 flex flex-col justify-center items-center px-8 w-full max-w-sm mx-auto">
         {/* 로고 */}
-        <div className="mb-12 text-center w-full">
-          <h1 className="font-brand text-5xl font-bold tracking-tight bg-gradient-to-r from-surface-tint to-secondary bg-clip-text text-transparent pb-1">
+        <div className="mb-16 text-center">
+          <h1 className="font-brand text-6xl font-bold tracking-tight bg-gradient-to-r from-surface-tint to-secondary bg-clip-text text-transparent pb-1">
             LUNKER
           </h1>
-          <p className="text-on-surface-variant text-sm mt-2">프로 앵글러를 위한 여정의 시작</p>
+          <p className="text-on-surface-variant text-sm mt-3">프로 앵글러를 위한 여정의 시작</p>
         </div>
 
-        {/* 로그인 폼 */}
-        <form className="w-full space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-on-surface-variant mb-2 tracking-wider uppercase">
-              이메일 주소
-            </label>
-            <input
-              type="email"
-              placeholder="이메일을 입력하세요"
-              className="w-full h-14 px-4 rounded bg-surface-container/60 backdrop-blur-sm border border-outline-variant text-on-surface placeholder:text-outline text-sm focus:outline-none focus:border-surface-tint focus:ring-1 focus:ring-surface-tint transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-on-surface-variant mb-2 tracking-wider uppercase">
-              비밀번호
-            </label>
-            <input
-              type="password"
-              placeholder="비밀번호를 입력하세요"
-              className="w-full h-14 px-4 rounded bg-surface-container/60 backdrop-blur-sm border border-outline-variant text-on-surface placeholder:text-outline text-sm focus:outline-none focus:border-surface-tint focus:ring-1 focus:ring-surface-tint transition-all"
-            />
-          </div>
-
-          <Link
-            href="/feed"
-            className="block w-full h-14 bg-surface-tint text-on-primary font-bold text-sm rounded flex items-center justify-center mt-6 glow-mint hover:bg-primary-fixed transition-colors"
-          >
-            로그인
-          </Link>
-        </form>
-
-        {/* 구분선 */}
-        <div className="w-full flex items-center gap-4 my-7">
-          <div className="h-px flex-1 bg-outline-variant" />
-          <span className="text-xs text-outline">또는</span>
-          <div className="h-px flex-1 bg-outline-variant" />
-        </div>
-
-        {/* 구글 로그인 */}
-        <Link
-          href="/feed"
-          className="w-full h-14 glass-panel rounded flex items-center justify-center gap-3 text-on-surface text-sm font-medium hover:bg-surface-container-high transition-colors"
+        {/* 구글 로그인 버튼 */}
+        <button
+          onClick={handleGoogleLogin}
+          className="w-full h-14 glass-panel rounded-lg flex items-center justify-center gap-3 text-on-surface text-sm font-semibold hover:bg-surface-container-high active:scale-95 transition-all"
         >
           <GoogleIcon />
-          구글로 시작하기
-        </Link>
+          Google로 시작하기
+        </button>
 
-        {/* 푸터 링크 */}
-        <div className="mt-8 flex items-center justify-center gap-6 text-sm text-on-surface-variant">
-          <a href="#" className="hover:text-surface-tint transition-colors">비밀번호 찾기</a>
-          <div className="w-1 h-1 rounded-full bg-outline-variant" />
-          <a href="#" className="hover:text-surface-tint transition-colors">회원가입</a>
-        </div>
+        <p className="mt-6 text-xs text-outline text-center leading-relaxed">
+          계속 진행하면 LUNKER의{" "}
+          <span className="text-on-surface-variant">서비스 이용약관</span> 및{" "}
+          <span className="text-on-surface-variant">개인정보 처리방침</span>에 동의한 것으로 간주합니다.
+        </p>
       </div>
     </main>
   );
