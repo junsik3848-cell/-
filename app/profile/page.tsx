@@ -1,21 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { SettingsIcon, LogOutIcon } from "@/components/icons";
-import { MOCK_POSTS, MOCK_MARKET_POSTS } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/client";
 
-const ME = {
-  username: "bass_hunter_99",
-  bio: "충주호 베이스캠프 🎣 텍사스 & 캐롤라이나 리그 전문",
-  avatar: "https://picsum.photos/seed/user1/120/120",
-  followers: 1284,
-  following: 392,
-  posts: MOCK_POSTS.filter((p) => p.user.username === "bass_hunter_99"),
-  marketPosts: MOCK_MARKET_POSTS.filter((p) => p.user.username === "bass_hunter_99"),
+type UserProfile = {
+  username: string;
+  full_name: string | null;
+  avatar_url: string | null;
 };
 
 const TABS = [
@@ -27,12 +22,35 @@ export default function ProfilePage() {
   const router = useRouter();
   const [tab, setTab] = useState("posts");
   const [showSettings, setShowSettings] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProfile() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("users")
+        .select("username, full_name, avatar_url")
+        .eq("id", user.id)
+        .single();
+
+      if (data) setProfile(data);
+      setIsLoading(false);
+    }
+    loadProfile();
+  }, []);
 
   async function handleLogout() {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/login");
   }
+
+  const avatarSrc = profile?.avatar_url ?? `https://picsum.photos/seed/${profile?.username ?? "user"}/120/120`;
+  const displayName = profile?.username ?? "...";
 
   return (
     <div className="min-h-screen bg-background max-w-md mx-auto">
@@ -51,111 +69,100 @@ export default function ProfilePage() {
       </header>
 
       <main className="pt-14 pb-20">
-        {/* 프로필 헤더 */}
-        <div className="px-5 pt-6 pb-4">
-          <div className="flex items-center gap-5">
-            <div className="relative">
-              <img
-                src={ME.avatar}
-                alt={ME.username}
-                className="w-20 h-20 rounded-full object-cover ring-2 ring-surface-tint/60"
-              />
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-surface-tint rounded-full flex items-center justify-center text-xs font-bold text-on-primary">
-                ✓
-              </div>
-            </div>
-
-            <div className="flex-1">
-              <h2 className="text-lg font-bold text-on-surface">{ME.username}</h2>
-              <div className="flex gap-5 mt-2">
-                <div className="text-center">
-                  <p className="text-base font-bold text-on-surface">{ME.posts.length + 3}</p>
-                  <p className="text-xs text-on-surface-variant">조과</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-base font-bold text-on-surface">{ME.followers.toLocaleString()}</p>
-                  <p className="text-xs text-on-surface-variant">팔로워</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-base font-bold text-on-surface">{ME.following}</p>
-                  <p className="text-xs text-on-surface-variant">팔로잉</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <p className="mt-4 text-sm text-on-surface leading-relaxed">{ME.bio}</p>
-
-          {/* 총 기록 */}
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            {[
-              { label: "최대 어획", value: "3.8kg" },
-              { label: "평균 사이즈", value: "52cm" },
-              { label: "총 조과", value: `${ME.posts.length + 3}마리` },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-surface-container rounded-lg px-3 py-3 text-center border border-outline-variant/50">
-                <p className="text-sm font-bold text-surface-tint font-brand">{stat.value}</p>
-                <p className="text-[10px] text-on-surface-variant mt-0.5">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 탭 */}
-        <div className="flex border-b border-outline-variant/30">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${
-                tab === t.key ? "text-surface-tint" : "text-on-surface-variant"
-              }`}
-            >
-              {t.label}
-              {tab === t.key && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-surface-tint" />
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* 탭 콘텐츠 */}
-        {tab === "posts" ? (
-          <div className="grid grid-cols-3 gap-0.5 mt-0.5">
-            {Array.from(new Map([...ME.posts, ...MOCK_POSTS].map((p) => [p.id, p])).values()).map((post) => (
-              <Link key={post.id} href={`/post/${post.id}`} className="aspect-square relative block overflow-hidden">
-                <img src={post.image} alt="" className="w-full h-full object-cover hover:opacity-80 transition-opacity" />
-                {post.fish && (
-                  <div className="absolute bottom-1.5 left-1.5 glass-panel px-1.5 py-0.5 rounded-full text-[9px] font-bold text-surface-tint">
-                    {post.fish.weight}kg
-                  </div>
-                )}
-              </Link>
-            ))}
+        {isLoading ? (
+          <div className="flex items-center justify-center pt-32">
+            <div className="w-8 h-8 border-2 border-surface-tint border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="px-4 pt-3 space-y-3">
-            {ME.marketPosts.length === 0 ? (
-              <div className="text-center py-12 text-on-surface-variant">
-                <p className="text-3xl mb-2">🛒</p>
-                <p className="text-sm">등록된 판매 글이 없습니다</p>
+          <>
+            {/* 프로필 헤더 */}
+            <div className="px-5 pt-6 pb-4">
+              <div className="flex items-center gap-5">
+                <div className="relative">
+                  <img
+                    src={avatarSrc}
+                    alt={displayName}
+                    className="w-20 h-20 rounded-full object-cover ring-2 ring-surface-tint/60"
+                  />
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-surface-tint rounded-full flex items-center justify-center text-xs font-bold text-on-primary">
+                    ✓
+                  </div>
+                </div>
+
+                <div className="flex-1">
+                  <h2 className="text-lg font-bold text-on-surface">{displayName}</h2>
+                  {profile?.full_name && (
+                    <p className="text-xs text-on-surface-variant mt-0.5">{profile.full_name}</p>
+                  )}
+                  <div className="flex gap-5 mt-2">
+                    <div className="text-center">
+                      <p className="text-base font-bold text-on-surface">0</p>
+                      <p className="text-xs text-on-surface-variant">조과</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-base font-bold text-on-surface">0</p>
+                      <p className="text-xs text-on-surface-variant">팔로워</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-base font-bold text-on-surface">0</p>
+                      <p className="text-xs text-on-surface-variant">팔로잉</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 총 기록 */}
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                {[
+                  { label: "최대 어획", value: "-" },
+                  { label: "평균 사이즈", value: "-" },
+                  { label: "총 조과", value: "0마리" },
+                ].map((stat) => (
+                  <div key={stat.label} className="bg-surface-container rounded-lg px-3 py-3 text-center border border-outline-variant/50">
+                    <p className="text-sm font-bold text-surface-tint font-brand">{stat.value}</p>
+                    <p className="text-[10px] text-on-surface-variant mt-0.5">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 탭 */}
+            <div className="flex border-b border-outline-variant/30">
+              {TABS.map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${
+                    tab === t.key ? "text-surface-tint" : "text-on-surface-variant"
+                  }`}
+                >
+                  {t.label}
+                  {tab === t.key && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-surface-tint" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* 탭 콘텐츠 */}
+            {tab === "posts" ? (
+              <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
+                <p className="text-4xl mb-3">🎣</p>
+                <p className="text-sm">아직 조과 기록이 없어요</p>
+                <Link href="/post/new" className="inline-block mt-4 text-xs text-surface-tint hover:underline">
+                  첫 조과 기록하기
+                </Link>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
+                <p className="text-4xl mb-3">🛒</p>
+                <p className="text-sm">등록된 판매 글이 없어요</p>
                 <Link href="/post/new" className="inline-block mt-4 text-xs text-surface-tint hover:underline">
                   장터 글 작성하기
                 </Link>
               </div>
-            ) : (
-              ME.marketPosts.map((item) => (
-                <Link key={item.id} href={`/market/${item.id}`} className="flex gap-3 p-3 bg-surface-container rounded-lg border border-outline-variant/50 hover:border-outline transition-all">
-                  <img src={item.image} alt="" className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-on-surface line-clamp-1">{item.title}</p>
-                    <p className="text-sm font-bold text-surface-tint mt-1">{item.price.toLocaleString()}원</p>
-                    <p className="text-xs text-outline mt-0.5">{item.createdAt}</p>
-                  </div>
-                </Link>
-              ))
             )}
-          </div>
+          </>
         )}
       </main>
 
