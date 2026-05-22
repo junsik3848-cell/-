@@ -9,7 +9,8 @@
       "mcp__supabase__get_publishable_keys",
       "mcp__supabase__apply_migration",
       "Bash(vercel env *)",
-      "Bash(vercel --prod)"
+      "Bash(vercel --prod)",
+      "Bash(npx tsc *)"
     ]
   }
 }
