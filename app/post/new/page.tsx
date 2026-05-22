@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { XIcon, CameraIcon, ImageIcon, TagIcon } from "@/components/icons";
+import { createClient } from "@/lib/supabase/client";
 
 type PostType = "catch" | "market" | null;
 
@@ -36,6 +37,7 @@ export default function NewPostPage() {
   const router = useRouter();
   const [postType, setPostType] = useState<PostType>(null);
   const [showTypeSheet, setShowTypeSheet] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const catchFileInputRef = useRef<HTMLInputElement>(null);
   const marketFileInputRef = useRef<HTMLInputElement>(null);
@@ -87,7 +89,54 @@ export default function NewPostPage() {
     }
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { router.push("/login"); return; }
+
+    const images = postType === "catch" ? catchForm.images : marketForm.images;
+
+    // 이미지를 Supabase Storage에 업로드
+    const uploadedUrls: string[] = [];
+    for (const blobUrl of images) {
+      const blob = await fetch(blobUrl).then((r) => r.blob());
+      const ext = blob.type.split("/")[1] || "jpg";
+      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supabase.storage.from("post-images").upload(path, blob);
+      if (!error) {
+        const { data } = supabase.storage.from("post-images").getPublicUrl(path);
+        uploadedUrls.push(data.publicUrl);
+      }
+    }
+
+    // DB에 게시글 저장
+    if (postType === "catch") {
+      await supabase.from("posts").insert({
+        user_id: user.id,
+        type: "catch",
+        images: uploadedUrls,
+        caption: catchForm.caption,
+        location: catchForm.location,
+        hashtags: catchForm.hashtags,
+        weight: catchForm.weight ? parseFloat(catchForm.weight) : null,
+        length: catchForm.length ? parseFloat(catchForm.length) : null,
+      });
+    } else {
+      await supabase.from("posts").insert({
+        user_id: user.id,
+        type: "market",
+        images: uploadedUrls,
+        title: marketForm.title,
+        price: marketForm.price ? parseInt(marketForm.price) : null,
+        category: marketForm.category,
+        location: marketForm.location,
+        description: marketForm.description,
+      });
+    }
+
     router.push("/feed");
   }
 
@@ -105,9 +154,10 @@ export default function NewPostPage() {
           {postType && (
             <button
               onClick={handleSubmit}
-              className="text-surface-tint text-sm font-bold hover:text-primary-fixed transition-colors"
+              disabled={isSubmitting}
+              className="text-surface-tint text-sm font-bold hover:text-primary-fixed transition-colors disabled:opacity-50"
             >
-              게시
+              {isSubmitting ? "저장 중..." : "게시"}
             </button>
           )}
           {!postType && <div className="w-10" />}
@@ -261,9 +311,10 @@ export default function NewPostPage() {
 
             <button
               onClick={handleSubmit}
-              className="w-full h-12 bg-surface-tint text-on-primary font-bold text-sm rounded-lg glow-mint hover:bg-primary-fixed transition-colors"
+              disabled={isSubmitting}
+              className="w-full h-12 bg-surface-tint text-on-primary font-bold text-sm rounded-lg glow-mint hover:bg-primary-fixed transition-colors disabled:opacity-50"
             >
-              조과 기록 게시하기
+              {isSubmitting ? "게시 중..." : "조과 기록 게시하기"}
             </button>
           </div>
         )}
@@ -372,9 +423,10 @@ export default function NewPostPage() {
 
             <button
               onClick={handleSubmit}
-              className="w-full h-12 bg-surface-tint text-on-primary font-bold text-sm rounded-lg glow-mint hover:bg-primary-fixed transition-colors"
+              disabled={isSubmitting}
+              className="w-full h-12 bg-surface-tint text-on-primary font-bold text-sm rounded-lg glow-mint hover:bg-primary-fixed transition-colors disabled:opacity-50"
             >
-              장터 글 등록하기
+              {isSubmitting ? "게시 중..." : "장터 글 등록하기"}
             </button>
           </div>
         )}
