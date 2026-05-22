@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { SettingsIcon, LogOutIcon } from "@/components/icons";
 import { MOCK_POSTS, MOCK_MARKET_POSTS } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase/client";
 
 const ME = {
   username: "bass_hunter_99",
@@ -27,8 +28,9 @@ export default function ProfilePage() {
   const [tab, setTab] = useState("posts");
   const [showSettings, setShowSettings] = useState(false);
 
-  function handleLogout() {
-    document.cookie = "lunker_auth=; path=/; max-age=0";
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
     router.push("/login");
   }
 
