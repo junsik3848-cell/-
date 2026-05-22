@@ -9,7 +9,23 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
+
     if (!error) {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from("users")
+          .select("username")
+          .eq("id", user.id)
+          .single();
+
+        // username 미설정 신규 사용자 → 온보딩
+        if (!profile?.username) {
+          return NextResponse.redirect(`${origin}/onboarding`);
+        }
+      }
+
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

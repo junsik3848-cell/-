@@ -32,7 +32,7 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 미인증 사용자가 보호된 경로 접근 시 로그인 페이지로 리디렉트
-  const protectedPaths = ["/feed", "/map", "/market", "/post", "/profile"];
+  const protectedPaths = ["/feed", "/map", "/market", "/post", "/profile", "/onboarding"];
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
 
   if (!user && isProtected) {
