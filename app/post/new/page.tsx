@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { XIcon, CameraIcon, ImageIcon, TagIcon } from "@/components/icons";
@@ -32,16 +32,13 @@ const MARKET_CATEGORIES = [
   { value: "etc", label: "기타" },
 ];
 
-const PLACEHOLDER_IMAGES = [
-  "https://picsum.photos/seed/new1/400/400",
-  "https://picsum.photos/seed/new2/400/400",
-  "https://picsum.photos/seed/new3/400/400",
-];
-
 export default function NewPostPage() {
   const router = useRouter();
   const [postType, setPostType] = useState<PostType>(null);
   const [showTypeSheet, setShowTypeSheet] = useState(true);
+
+  const catchFileInputRef = useRef<HTMLInputElement>(null);
+  const marketFileInputRef = useRef<HTMLInputElement>(null);
 
   const [catchForm, setCatchForm] = useState<CatchForm>({
     images: [],
@@ -61,12 +58,32 @@ export default function NewPostPage() {
     description: "",
   });
 
-  function addMockImage(form: "catch" | "market") {
-    const img = PLACEHOLDER_IMAGES[Math.floor(Math.random() * PLACEHOLDER_IMAGES.length)];
+  useEffect(() => {
+    const urls = [...catchForm.images, ...marketForm.images];
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, []);
+
+  function handleFileChange(form: "catch" | "market", files: FileList | null) {
+    if (!files) return;
+    const newUrls = Array.from(files).map((f) => URL.createObjectURL(f));
     if (form === "catch") {
-      setCatchForm((f) => ({ ...f, images: [...f.images, img].slice(0, 5) }));
+      setCatchForm((f) => ({ ...f, images: [...f.images, ...newUrls].slice(0, 5) }));
     } else {
-      setMarketForm((f) => ({ ...f, images: [...f.images, img].slice(0, 5) }));
+      setMarketForm((f) => ({ ...f, images: [...f.images, ...newUrls].slice(0, 5) }));
+    }
+  }
+
+  function removeImage(form: "catch" | "market", index: number) {
+    if (form === "catch") {
+      setCatchForm((f) => {
+        URL.revokeObjectURL(f.images[index]);
+        return { ...f, images: f.images.filter((_, j) => j !== index) };
+      });
+    } else {
+      setMarketForm((f) => {
+        URL.revokeObjectURL(f.images[index]);
+        return { ...f, images: f.images.filter((_, j) => j !== index) };
+      });
     }
   }
 
@@ -147,19 +164,29 @@ export default function NewPostPage() {
           <div className="px-4 pt-4 space-y-5">
             {/* 사진 업로드 */}
             <div>
+              <input
+                ref={catchFileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => handleFileChange("catch", e.target.files)}
+              />
               <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-                <button
-                  onClick={() => addMockImage("catch")}
-                  className="w-24 h-24 flex-shrink-0 rounded-xl border-2 border-dashed border-outline-variant flex flex-col items-center justify-center gap-1 hover:border-surface-tint/50 transition-colors"
-                >
-                  <CameraIcon size={22} className="text-outline" />
-                  <span className="text-[10px] text-outline">사진 추가</span>
-                </button>
+                {catchForm.images.length < 5 && (
+                  <button
+                    onClick={() => catchFileInputRef.current?.click()}
+                    className="w-24 h-24 flex-shrink-0 rounded-xl border-2 border-dashed border-outline-variant flex flex-col items-center justify-center gap-1 hover:border-surface-tint/50 transition-colors"
+                  >
+                    <CameraIcon size={22} className="text-outline" />
+                    <span className="text-[10px] text-outline">사진 추가</span>
+                  </button>
+                )}
                 {catchForm.images.map((img, i) => (
                   <div key={i} className="relative flex-shrink-0">
                     <img src={img} alt="" className="w-24 h-24 rounded-xl object-cover" />
                     <button
-                      onClick={() => setCatchForm((f) => ({ ...f, images: f.images.filter((_, j) => j !== i) }))}
+                      onClick={() => removeImage("catch", i)}
                       className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-error rounded-full flex items-center justify-center"
                     >
                       <XIcon size={10} className="text-on-error" />
@@ -249,19 +276,29 @@ export default function NewPostPage() {
               <label className="block text-xs font-medium text-on-surface-variant mb-2 tracking-wide">
                 상품 사진 (최대 5장)
               </label>
+              <input
+                ref={marketFileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => handleFileChange("market", e.target.files)}
+              />
               <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-                <button
-                  onClick={() => addMockImage("market")}
-                  className="w-24 h-24 flex-shrink-0 rounded-xl border-2 border-dashed border-outline-variant flex flex-col items-center justify-center gap-1 hover:border-surface-tint/50 transition-colors"
-                >
-                  <ImageIcon size={22} className="text-outline" />
-                  <span className="text-[10px] text-outline">추가</span>
-                </button>
+                {marketForm.images.length < 5 && (
+                  <button
+                    onClick={() => marketFileInputRef.current?.click()}
+                    className="w-24 h-24 flex-shrink-0 rounded-xl border-2 border-dashed border-outline-variant flex flex-col items-center justify-center gap-1 hover:border-surface-tint/50 transition-colors"
+                  >
+                    <ImageIcon size={22} className="text-outline" />
+                    <span className="text-[10px] text-outline">추가</span>
+                  </button>
+                )}
                 {marketForm.images.map((img, i) => (
                   <div key={i} className="relative flex-shrink-0">
                     <img src={img} alt="" className="w-24 h-24 rounded-xl object-cover" />
                     <button
-                      onClick={() => setMarketForm((f) => ({ ...f, images: f.images.filter((_, j) => j !== i) }))}
+                      onClick={() => removeImage("market", i)}
                       className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-error rounded-full flex items-center justify-center"
                     >
                       <XIcon size={10} className="text-on-error" />
