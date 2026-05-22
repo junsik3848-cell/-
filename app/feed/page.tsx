@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
 import { BellIcon, HeartIcon, MessageCircleIcon, BookmarkIcon } from "@/components/icons";
-import { MOCK_POSTS, type Post } from "@/lib/mock-data";
+import { type Post } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/client";
 
 type RealPost = {
@@ -43,7 +43,7 @@ function toFeedPost(p: RealPost): Post & { _real?: boolean } {
 }
 
 export default function FeedPage() {
-  const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
+  const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
     async function loadRealPosts() {
@@ -55,9 +55,8 @@ export default function FeedPage() {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (data && data.length > 0) {
-        const realPosts = (data as RealPost[]).map(toFeedPost);
-        setPosts([...realPosts, ...MOCK_POSTS]);
+      if (data) {
+        setPosts((data as RealPost[]).map(toFeedPost));
       }
     }
     loadRealPosts();
@@ -92,14 +91,22 @@ export default function FeedPage() {
       </header>
 
       <main className="pt-14 pb-20">
-        {posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            onLike={() => toggleLike(post.id)}
-            onBookmark={() => toggleBookmark(post.id)}
-          />
-        ))}
+        {posts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center pt-32 text-on-surface-variant">
+            <p className="text-5xl mb-4">🎣</p>
+            <p className="text-sm font-medium">아직 게시글이 없어요</p>
+            <p className="text-xs mt-1 text-outline">첫 조과를 기록해보세요!</p>
+          </div>
+        ) : (
+          posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              onLike={() => toggleLike(post.id)}
+              onBookmark={() => toggleBookmark(post.id)}
+            />
+          ))
+        )}
       </main>
 
       <BottomNav />
