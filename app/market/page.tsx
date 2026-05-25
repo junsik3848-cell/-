@@ -33,7 +33,7 @@ export default function MarketPage() {
   return (
     <div className="min-h-screen bg-background max-w-md mx-auto">
       {/* 헤더 */}
-      <header className="fixed top-0 left-0 right-0 z-40 max-w-md mx-auto glass-panel border-b border-outline-variant/30">
+      <header className="fixed top-0 left-0 right-0 z-40 max-w-md mx-auto bg-surface-container border-b border-outline-variant/30">
         <div className="flex items-center justify-center px-5 h-14 relative">
           <h1 className="font-brand text-xl font-bold tracking-widest text-surface-tint">LUNKER</h1>
         </div>

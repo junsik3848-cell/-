@@ -10,7 +10,10 @@
       "mcp__supabase__apply_migration",
       "Bash(vercel env *)",
       "Bash(vercel --prod)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "mcp__supabase__list_tables",
+      "Bash(Select-String \"middleware\")",
+      "mcp__supabase__execute_sql"
     ]
   }
 }

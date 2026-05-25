@@ -22,7 +22,7 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-outline-variant/40 max-w-md mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-surface-container border-t border-outline-variant/40 max-w-md mx-auto">
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.map(({ href, icon: Icon, label, isFab }) => {
           const isActive = pathname === href || (href === "/feed" && pathname === "/");

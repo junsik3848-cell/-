@@ -1,11 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+
+function isInAppBrowser() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  return /KAKAOTALK|Instagram|FBAN|FBAV|Line\/|Naver|DaumApps|MicroMessenger/i.test(ua);
+}
+
+function openInChrome(url: string) {
+  // Android: intent scheme으로 Chrome 강제 실행
+  const intentUrl = `intent://${url.replace(/^https?:\/\//, "")}#Intent;scheme=https;package=com.android.chrome;end`;
+  window.location.href = intentUrl;
+}
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [inAppBrowser, setInAppBrowser] = useState(false);
   const supabase = createClient();
+
+  useEffect(() => {
+    setInAppBrowser(isInAppBrowser());
+  }, []);
 
   async function handleGoogleLogin() {
     setIsLoading(true);
@@ -15,12 +32,10 @@ export default function LoginPage() {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
-    // OAuth는 리디렉트되므로 loading 상태 유지
   }
 
   return (
     <main className="relative min-h-screen flex flex-col overflow-hidden bg-background">
-      {/* 배경 이미지 */}
       <div className="absolute inset-0 z-0">
         <img
           src="https://picsum.photos/seed/darkwater/800/1200"
@@ -30,9 +45,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/40 to-background" />
       </div>
 
-      {/* 메인 콘텐츠 */}
       <div className="relative z-10 flex-1 flex flex-col justify-center items-center px-8 w-full max-w-sm mx-auto">
-        {/* 로고 */}
         <div className="mb-16 text-center">
           <h1 className="font-brand text-6xl font-bold tracking-tight bg-gradient-to-r from-surface-tint to-secondary bg-clip-text text-transparent pb-1">
             LUNKER
@@ -40,27 +53,51 @@ export default function LoginPage() {
           <p className="text-on-surface-variant text-sm mt-3">프로 앵글러를 위한 여정의 시작</p>
         </div>
 
-        {/* 구글 로그인 버튼 */}
-        <button
-          onClick={handleGoogleLogin}
-          disabled={isLoading}
-          className="w-full h-14 glass-panel rounded-lg flex items-center justify-center gap-3 text-on-surface text-sm font-semibold hover:bg-surface-container-high active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {isLoading ? (
-            <LoadingSpinner />
-          ) : (
-            <>
-              <GoogleIcon />
-              Google로 시작하기
-            </>
-          )}
-        </button>
-
-        <p className="mt-6 text-xs text-outline text-center leading-relaxed">
-          계속 진행하면 LUNKER의{" "}
-          <span className="text-on-surface-variant">서비스 이용약관</span> 및{" "}
-          <span className="text-on-surface-variant">개인정보 처리방침</span>에 동의한 것으로 간주합니다.
-        </p>
+        {inAppBrowser ? (
+          /* 인앱브라우저 안내 */
+          <div className="w-full space-y-4">
+            <div className="w-full rounded-xl bg-surface-container border border-outline-variant/50 px-5 py-5 text-center space-y-3">
+              <p className="text-2xl">⚠️</p>
+              <p className="text-sm font-bold text-on-surface">
+                카카오톡 브라우저에서는<br />Google 로그인이 지원되지 않아요
+              </p>
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                Google 정책으로 인해 인앱브라우저에서는<br />로그인할 수 없어요.
+              </p>
+            </div>
+            <button
+              onClick={() => openInChrome(window.location.href)}
+              className="w-full h-14 bg-surface-tint rounded-xl flex items-center justify-center gap-2 text-on-primary text-sm font-bold glow-mint active:scale-95 transition-all"
+            >
+              Chrome으로 열기
+            </button>
+            <p className="text-xs text-outline text-center">
+              또는 주소를 복사해 Chrome / Safari에서 접속해 주세요
+            </p>
+            <button
+              onClick={() => navigator.clipboard?.writeText(window.location.href)}
+              className="w-full h-11 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-medium active:scale-95 transition-all"
+            >
+              주소 복사하기
+            </button>
+          </div>
+        ) : (
+          /* 일반 브라우저: 구글 로그인 버튼 */
+          <>
+            <button
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+              className="w-full h-14 glass-panel rounded-lg flex items-center justify-center gap-3 text-on-surface text-sm font-semibold hover:bg-surface-container-high active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isLoading ? <LoadingSpinner /> : <><GoogleIcon />Google로 시작하기</>}
+            </button>
+            <p className="mt-6 text-xs text-outline text-center leading-relaxed">
+              계속 진행하면 LUNKER의{" "}
+              <span className="text-on-surface-variant">서비스 이용약관</span> 및{" "}
+              <span className="text-on-surface-variant">개인정보 처리방침</span>에 동의한 것으로 간주합니다.
+            </p>
+          </>
+        )}
       </div>
     </main>
   );

@@ -2,85 +2,122 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
+import ImageCarousel from "@/components/ImageCarousel";
 import { BellIcon, HeartIcon, MessageCircleIcon, BookmarkIcon } from "@/components/icons";
-import { type Post } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/client";
 
-type RealPost = {
+type FeedPost = {
   id: string;
   user_id: string;
-  type: string;
   images: string[];
   caption: string | null;
   location: string | null;
   weight: number | null;
   length: number | null;
+  likes_count: number;
+  comments_count: number;
   created_at: string;
   users: { username: string; avatar_url: string | null };
+  isLiked: boolean;
+  isBookmarked: boolean;
 };
 
-function toFeedPost(p: RealPost): Post & { _real?: boolean } {
-  return {
-    id: p.id,
-    user: {
-      id: p.user_id,
-      username: p.users.username,
-      avatar: p.users.avatar_url ?? `https://picsum.photos/seed/${p.users.username}/80/80`,
-    },
-    image: p.images[0] ?? "https://picsum.photos/seed/empty/400/500",
-    location: p.location ?? "",
-    fish: p.weight || p.length ? { weight: p.weight ?? 0, length: p.length ?? 0 } : null,
-    caption: p.caption ?? "",
-    hashtags: [],
-    likes: 0,
-    comments: 0,
-    createdAt: new Date(p.created_at).toLocaleDateString("ko-KR"),
-    isLiked: false,
-    isBookmarked: false,
-    _real: true,
-  };
-}
-
 export default function FeedPage() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const router = useRouter();
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function loadRealPosts() {
+    async function load() {
       const supabase = createClient();
-      const { data } = await supabase
-        .from("posts")
-        .select("*, users(username, avatar_url)")
-        .eq("type", "catch")
-        .order("created_at", { ascending: false })
-        .limit(50);
+      const [{ data: { user } }, { data: rawPosts }] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase
+          .from("posts")
+          .select("id, user_id, images, caption, location, weight, length, likes_count, comments_count, created_at, users(username, avatar_url)")
+          .eq("type", "catch")
+          .order("created_at", { ascending: false })
+          .limit(50),
+      ]);
 
-      if (data) {
-        setPosts((data as RealPost[]).map(toFeedPost));
+      const userId = user?.id ?? null;
+      setMyUserId(userId);
+
+      if (!rawPosts || rawPosts.length === 0) {
+        setIsLoading(false);
+        return;
       }
+
+      let likedIds = new Set<string>();
+      let bookmarkedIds = new Set<string>();
+
+      if (userId) {
+        const postIds = rawPosts.map((p) => p.id);
+        const [{ data: likeRows }, { data: bookmarkRows }] = await Promise.all([
+          supabase.from("likes").select("post_id").eq("user_id", userId).in("post_id", postIds),
+          supabase.from("bookmarks").select("post_id").eq("user_id", userId).in("post_id", postIds),
+        ]);
+        likedIds = new Set((likeRows ?? []).map((r: { post_id: string }) => r.post_id));
+        bookmarkedIds = new Set((bookmarkRows ?? []).map((r: { post_id: string }) => r.post_id));
+      }
+
+      setPosts(
+        rawPosts
+          .filter((p) => p.users != null)
+          .map((p) => ({
+            ...p,
+            users: p.users as unknown as { username: string; avatar_url: string | null },
+            isLiked: likedIds.has(p.id),
+            isBookmarked: bookmarkedIds.has(p.id),
+          }))
+      );
+      setIsLoading(false);
     }
-    loadRealPosts();
+    load();
   }, []);
 
-  function toggleLike(id: string) {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 }
-          : p
-      )
-    );
+  async function toggleLike(postId: string) {
+    if (!myUserId) { router.push("/login"); return; }
+    const supabase = createClient();
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return;
+
+    if (post.isLiked) {
+      await supabase.from("likes").delete().eq("post_id", postId).eq("user_id", myUserId);
+      setPosts((prev) => prev.map((p) => p.id === postId
+        ? { ...p, isLiked: false, likes_count: Math.max(p.likes_count - 1, 0) }
+        : p
+      ));
+    } else {
+      await supabase.from("likes").insert({ post_id: postId, user_id: myUserId });
+      setPosts((prev) => prev.map((p) => p.id === postId
+        ? { ...p, isLiked: true, likes_count: p.likes_count + 1 }
+        : p
+      ));
+    }
   }
 
-  function toggleBookmark(id: string) {
-    setPosts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, isBookmarked: !p.isBookmarked } : p))
-    );
+  async function toggleBookmark(postId: string) {
+    if (!myUserId) { router.push("/login"); return; }
+    const supabase = createClient();
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return;
+
+    if (post.isBookmarked) {
+      await supabase.from("bookmarks").delete().eq("post_id", postId).eq("user_id", myUserId);
+      setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, isBookmarked: false } : p));
+    } else {
+      await supabase.from("bookmarks").insert({ post_id: postId, user_id: myUserId });
+      setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, isBookmarked: true } : p));
+    }
   }
 
   return (
     <div className="min-h-screen bg-background max-w-md mx-auto">
-      <header className="fixed top-0 left-0 right-0 z-40 max-w-md mx-auto glass-panel border-b border-outline-variant/30">
+      <header className="fixed top-0 left-0 right-0 z-40 max-w-md mx-auto bg-surface-container border-b border-outline-variant/30">
         <div className="flex items-center justify-between px-5 h-14">
           <div className="w-10" />
           <h1 className="font-brand text-xl font-bold tracking-widest text-surface-tint">LUNKER</h1>
@@ -91,7 +128,11 @@ export default function FeedPage() {
       </header>
 
       <main className="pt-14 pb-20">
-        {posts.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center pt-32">
+            <div className="w-8 h-8 border-2 border-surface-tint border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center pt-32 text-on-surface-variant">
             <p className="text-5xl mb-4">🎣</p>
             <p className="text-sm font-medium">아직 게시글이 없어요</p>
@@ -119,26 +160,28 @@ function PostCard({
   onLike,
   onBookmark,
 }: {
-  post: Post;
+  post: FeedPost;
   onLike: () => void;
   onBookmark: () => void;
 }) {
+  const avatar = post.users?.avatar_url ?? `https://picsum.photos/seed/${post.users?.username ?? "user"}/80/80`;
+
   return (
     <article className="border-b border-outline-variant/30">
-      <div className="relative aspect-[4/5] overflow-hidden">
-        <Link href={`/post/${post.id}`}>
-          <img src={post.image} alt="조과 사진" className="w-full h-full object-cover" />
+      <div className="relative">
+        <Link href={`/post/${post.id}`} className="block">
+          <ImageCarousel images={post.images.length > 0 ? post.images : ["https://picsum.photos/seed/empty/400/500"]} />
         </Link>
 
-        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent">
+        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent pointer-events-none">
           <div className="flex items-center gap-2.5">
             <img
-              src={post.user.avatar}
-              alt={post.user.username}
-              className="w-8 h-8 rounded-full object-cover ring-1 ring-surface-tint/60"
+              src={avatar}
+              alt={post.users?.username}
+              className="w-8 h-8 rounded-full object-cover ring-1 ring-surface-tint/60" loading="lazy"
             />
             <div>
-              <p className="text-white text-sm font-semibold leading-none">{post.user.username}</p>
+              <p className="text-white text-sm font-semibold leading-none">{post.users?.username}</p>
               {post.location && (
                 <p className="text-white/70 text-xs mt-0.5 flex items-center gap-1">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
@@ -151,14 +194,18 @@ function PostCard({
           </div>
         </div>
 
-        {post.fish && (
-          <div className="absolute bottom-3 left-3 flex gap-2">
-            <span className="glass-panel px-3 py-1.5 rounded-full text-xs font-bold text-surface-tint flex items-center gap-1.5">
-              <span>⚖</span>{post.fish.weight}kg
-            </span>
-            <span className="glass-panel px-3 py-1.5 rounded-full text-xs font-bold text-surface-tint flex items-center gap-1.5">
-              <span>📏</span>{post.fish.length}cm
-            </span>
+        {(post.weight || post.length) && (
+          <div className="absolute bottom-10 left-3 flex gap-2 pointer-events-none">
+            {post.weight && (
+              <span className="glass-panel px-3 py-1.5 rounded-full text-xs font-bold text-surface-tint flex items-center gap-1.5">
+                ⚖ {post.weight}kg
+              </span>
+            )}
+            {post.length && (
+              <span className="glass-panel px-3 py-1.5 rounded-full text-xs font-bold text-surface-tint flex items-center gap-1.5">
+                📏 {post.length}cm
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -173,10 +220,11 @@ function PostCard({
               }`}
             >
               <HeartIcon size={22} fill={post.isLiked ? "currentColor" : "none"} />
-              <span className="text-xs font-medium">{post.likes.toLocaleString()}</span>
+              <span className="text-xs font-medium">{post.likes_count.toLocaleString()}</span>
             </button>
-            <Link href={`/post/${post.id}`} className="text-on-surface-variant hover:text-on-surface transition-colors">
+            <Link href={`/post/${post.id}`} className="flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface transition-colors">
               <MessageCircleIcon size={22} />
+              <span className="text-xs font-medium">{post.comments_count}</span>
             </Link>
           </div>
           <button
@@ -190,19 +238,21 @@ function PostCard({
         </div>
 
         <p className="text-sm text-on-surface leading-relaxed">
-          <Link href="/profile" className="font-semibold hover:text-surface-tint transition-colors mr-1.5">
-            {post.user.username}
+          <Link href={`/profile/${post.user_id}`} className="font-semibold hover:text-surface-tint transition-colors mr-1.5">
+            {post.users.username}
           </Link>
           {post.caption}
         </p>
 
-        {post.comments > 0 && (
+        {post.comments_count > 0 && (
           <Link href={`/post/${post.id}`} className="block mt-1.5 text-xs text-on-surface-variant hover:text-on-surface transition-colors">
-            댓글 {post.comments}개 모두 보기
+            댓글 {post.comments_count}개 모두 보기
           </Link>
         )}
 
-        <p className="mt-1 text-[11px] text-outline">{post.createdAt}</p>
+        <p className="mt-1 text-[11px] text-outline">
+          {new Date(post.created_at).toLocaleDateString("ko-KR")}
+        </p>
       </div>
     </article>
   );

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { XIcon, CameraIcon, ImageIcon, TagIcon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
+import { compressImage } from "@/lib/compress-image";
 
 type PostType = "catch" | "market" | null;
 
@@ -65,9 +66,10 @@ export default function NewPostPage() {
     return () => urls.forEach((url) => URL.revokeObjectURL(url));
   }, []);
 
-  function handleFileChange(form: "catch" | "market", files: FileList | null) {
+  async function handleFileChange(form: "catch" | "market", files: FileList | null) {
     if (!files) return;
-    const newUrls = Array.from(files).map((f) => URL.createObjectURL(f));
+    const compressed = await Promise.all(Array.from(files).map((f) => compressImage(f, "post")));
+    const newUrls = compressed.map((f) => URL.createObjectURL(f));
     if (form === "catch") {
       setCatchForm((f) => ({ ...f, images: [...f.images, ...newUrls].slice(0, 5) }));
     } else {
@@ -143,7 +145,7 @@ export default function NewPostPage() {
   return (
     <div className="min-h-screen bg-background max-w-md mx-auto">
       {/* 헤더 */}
-      <header className="fixed top-0 left-0 right-0 z-40 max-w-md mx-auto glass-panel border-b border-outline-variant/30">
+      <header className="fixed top-0 left-0 right-0 z-40 max-w-md mx-auto bg-surface-container border-b border-outline-variant/30">
         <div className="flex items-center justify-between px-4 h-14">
           <Link href="/feed" className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors">
             <XIcon size={22} />
