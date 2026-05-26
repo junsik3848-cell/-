@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import ImageCarousel from "@/components/ImageCarousel";
 import { BellIcon, HeartIcon, MessageCircleIcon, BookmarkIcon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
+
+const PAGE_SIZE = 10;
 
 type FeedPost = {
   id: string;
@@ -29,55 +31,87 @@ export default function FeedPage() {
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const offsetRef = useRef(0);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const myUserIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    async function load() {
-      const supabase = createClient();
-      const [{ data: { user } }, { data: rawPosts }] = await Promise.all([
-        supabase.auth.getUser(),
-        supabase
-          .from("posts")
-          .select("id, user_id, images, caption, location, weight, length, likes_count, comments_count, created_at, users(username, avatar_url)")
-          .eq("type", "catch")
-          .order("created_at", { ascending: false })
-          .limit(50),
+  const loadPosts = useCallback(async (offset: number) => {
+    const supabase = createClient();
+    const { data: rawPosts } = await supabase
+      .from("posts")
+      .select("id, user_id, images, caption, location, weight, length, likes_count, comments_count, created_at, users(username, avatar_url)")
+      .eq("type", "catch")
+      .order("created_at", { ascending: false })
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (!rawPosts || rawPosts.length === 0) {
+      setHasMore(false);
+      return;
+    }
+
+    if (rawPosts.length < PAGE_SIZE) setHasMore(false);
+
+    const userId = myUserIdRef.current;
+    let likedIds = new Set<string>();
+    let bookmarkedIds = new Set<string>();
+
+    if (userId) {
+      const postIds = rawPosts.map((p) => p.id);
+      const [{ data: likeRows }, { data: bookmarkRows }] = await Promise.all([
+        supabase.from("likes").select("post_id").eq("user_id", userId).in("post_id", postIds),
+        supabase.from("bookmarks").select("post_id").eq("user_id", userId).in("post_id", postIds),
       ]);
+      likedIds = new Set((likeRows ?? []).map((r: { post_id: string }) => r.post_id));
+      bookmarkedIds = new Set((bookmarkRows ?? []).map((r: { post_id: string }) => r.post_id));
+    }
 
-      const userId = user?.id ?? null;
-      setMyUserId(userId);
+    const newPosts = rawPosts
+      .filter((p) => p.users != null)
+      .map((p) => ({
+        ...p,
+        users: p.users as unknown as { username: string; avatar_url: string | null },
+        isLiked: likedIds.has(p.id),
+        isBookmarked: bookmarkedIds.has(p.id),
+      }));
 
-      if (!rawPosts || rawPosts.length === 0) {
-        setIsLoading(false);
-        return;
-      }
+    setPosts((prev) => offset === 0 ? newPosts : [...prev, ...newPosts]);
+    offsetRef.current = offset + rawPosts.length;
+  }, []);
 
-      let likedIds = new Set<string>();
-      let bookmarkedIds = new Set<string>();
-
-      if (userId) {
-        const postIds = rawPosts.map((p) => p.id);
-        const [{ data: likeRows }, { data: bookmarkRows }] = await Promise.all([
-          supabase.from("likes").select("post_id").eq("user_id", userId).in("post_id", postIds),
-          supabase.from("bookmarks").select("post_id").eq("user_id", userId).in("post_id", postIds),
-        ]);
-        likedIds = new Set((likeRows ?? []).map((r: { post_id: string }) => r.post_id));
-        bookmarkedIds = new Set((bookmarkRows ?? []).map((r: { post_id: string }) => r.post_id));
-      }
-
-      setPosts(
-        rawPosts
-          .filter((p) => p.users != null)
-          .map((p) => ({
-            ...p,
-            users: p.users as unknown as { username: string; avatar_url: string | null },
-            isLiked: likedIds.has(p.id),
-            isBookmarked: bookmarkedIds.has(p.id),
-          }))
-      );
+  // 초기 로드
+  useEffect(() => {
+    async function init() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      myUserIdRef.current = user?.id ?? null;
+      setMyUserId(user?.id ?? null);
+      await loadPosts(0);
       setIsLoading(false);
     }
-    load();
-  }, []);
+    init();
+  }, [loadPosts]);
+
+  // 무한 스크롤 — sentinel이 뷰포트에 들어오면 다음 페이지 로드
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      async (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore && hasMore) {
+          setIsLoadingMore(true);
+          await loadPosts(offsetRef.current);
+          setIsLoadingMore(false);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [isLoadingMore, hasMore, loadPosts]);
 
   async function toggleLike(postId: string) {
     if (!myUserId) { router.push("/login"); return; }
@@ -139,14 +173,29 @@ export default function FeedPage() {
             <p className="text-xs mt-1 text-outline">첫 조과를 기록해보세요!</p>
           </div>
         ) : (
-          posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onLike={() => toggleLike(post.id)}
-              onBookmark={() => toggleBookmark(post.id)}
-            />
-          ))
+          <>
+            {posts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onLike={() => toggleLike(post.id)}
+                onBookmark={() => toggleBookmark(post.id)}
+              />
+            ))}
+
+            {/* 무한 스크롤 sentinel */}
+            <div ref={sentinelRef} className="h-4" />
+
+            {isLoadingMore && (
+              <div className="flex justify-center py-6">
+                <div className="w-6 h-6 border-2 border-surface-tint border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+
+            {!hasMore && posts.length > 0 && (
+              <p className="text-center text-xs text-outline py-6">모든 게시글을 불러왔어요</p>
+            )}
+          </>
         )}
       </main>
 
@@ -173,14 +222,16 @@ function PostCard({
           <ImageCarousel images={post.images.length > 0 ? post.images : ["https://picsum.photos/seed/empty/400/500"]} />
         </Link>
 
-        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent pointer-events-none">
+        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent">
           <div className="flex items-center gap-2.5">
-            <img
-              src={avatar}
-              alt={post.users?.username}
-              className="w-8 h-8 rounded-full object-cover ring-1 ring-surface-tint/60" loading="lazy"
-            />
-            <div>
+            <Link href={`/profile/${post.user_id}`}>
+              <img
+                src={avatar}
+                alt={post.users?.username}
+                className="w-8 h-8 rounded-full object-cover ring-1 ring-surface-tint/60"
+              />
+            </Link>
+            <div className="pointer-events-none">
               <p className="text-white text-sm font-semibold leading-none">{post.users?.username}</p>
               {post.location && (
                 <p className="text-white/70 text-xs mt-0.5 flex items-center gap-1">
@@ -238,9 +289,7 @@ function PostCard({
         </div>
 
         <p className="text-sm text-on-surface leading-relaxed">
-          <Link href={`/profile/${post.user_id}`} className="font-semibold hover:text-surface-tint transition-colors mr-1.5">
-            {post.users.username}
-          </Link>
+          <span className="font-semibold mr-1.5">{post.users.username}</span>
           {post.caption}
         </p>
 

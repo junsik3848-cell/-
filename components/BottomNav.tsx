@@ -12,9 +12,9 @@ import {
 
 const navItems = [
   { href: "/feed", icon: HomeIcon, label: "홈" },
-  { href: "/map", icon: MapPinIcon, label: "탐색기" },
+  { href: "/map", icon: MapPinIcon, label: "출조" },
   { href: "/post/new", icon: PlusIcon, label: "글쓰기", isFab: true },
-  { href: "/market", icon: ShoppingBagIcon, label: "쇼핑" },
+  { href: "/market", icon: ShoppingBagIcon, label: "장비" },
   { href: "/profile", icon: UserCircleIcon, label: "프로필" },
 ];
 

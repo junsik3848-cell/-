@@ -205,15 +205,17 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
         {/* 사진 */}
         <div className="relative">
           <ImageCarousel images={post.images.length > 0 ? post.images : ["https://picsum.photos/seed/empty/400/500"]} />
-          <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent pointer-events-none">
+          <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img
-                  src={authorAvatar}
-                  alt={post.users.username}
-                  className="w-10 h-10 rounded-full object-cover ring-2 ring-surface-tint/60"
-                />
-                <div>
+                <Link href={`/profile/${post.user_id}`}>
+                  <img
+                    src={authorAvatar}
+                    alt={post.users.username}
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-surface-tint/60"
+                  />
+                </Link>
+                <div className="pointer-events-none">
                   <p className="text-white text-sm font-semibold leading-none">{post.users.username}</p>
                   {post.location && (
                     <p className="text-white/70 text-xs mt-1 flex items-center gap-1">
@@ -272,9 +274,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
         {/* 캡션 */}
         <div className="px-4 py-3 border-b border-outline-variant/30">
           <p className="text-sm text-on-surface leading-relaxed">
-            <Link href={`/profile/${post.user_id}`} className="font-semibold hover:text-surface-tint transition-colors mr-1.5">
-              {post.users.username}
-            </Link>
+            <span className="font-semibold mr-1.5">{post.users.username}</span>
             {post.caption}
           </p>
           <p className="mt-2 text-xs text-outline">
@@ -294,16 +294,16 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
             const avatar = comment.users.avatar_url ?? `https://picsum.photos/seed/${comment.users.username}/40/40`;
             return (
               <div key={comment.id} className="flex gap-3">
-                <img
-                  src={avatar}
-                  alt={comment.users.username}
-                  className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
-                />
+                <Link href={`/profile/${comment.user_id}`} className="flex-shrink-0 mt-0.5">
+                  <img
+                    src={avatar}
+                    alt={comment.users.username}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                </Link>
                 <div className="flex-1">
                   <p className="text-sm text-on-surface">
-                    <Link href={`/profile/${comment.user_id}`} className="font-semibold hover:text-surface-tint transition-colors mr-1.5">
-                      {comment.users.username}
-                    </Link>
+                    <span className="font-semibold mr-1.5">{comment.users.username}</span>
                     {comment.text}
                   </p>
                   <span className="text-xs text-outline mt-1 block">
