@@ -13,7 +13,30 @@
       "Bash(npx tsc *)",
       "mcp__supabase__list_tables",
       "Bash(Select-String \"middleware\")",
-      "mcp__supabase__execute_sql"
+      "mcp__supabase__execute_sql",
+      "Bash(npx vercel *)",
+      "Bash(npm install *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(vercel --version)",
+      "Bash(vercel whoami *)",
+      "Bash(vercel ls *)",
+      "Bash(curl -s \"https://api.vworld.kr/req/wms?service=WMS&request=GetCapabilities&key=8D0A48C6-1071-37B3-955D-F83F28544E16&domain=localhost\")",
+      "Bash(python -c \"import sys; data=sys.stdin.read\\(\\); print\\(data[:3000]\\)\")",
+      "Bash(curl -s \"https://api.vworld.kr/req/wms?service=WMS&request=GetCapabilities&key=8D0A48C6-1071-37B3-955D-F83F28544E16&domain=localhost\" -o \"C:\\\\Users\\\\jun_s\\\\Desktop\\\\vworld_caps.xml\")",
+      "WebFetch(domain:api.vworld.kr)",
+      "WebFetch(domain:www.vworld.kr)",
+      "WebFetch(domain:map.ngii.go.kr)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:wayback.maptiles.arcgis.com)",
+      "WebFetch(domain:s3-us-west-2.amazonaws.com)",
+      "Bash(curl -s \"https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer?f=json\" -o \"C:\\\\Users\\\\jun_s\\\\Desktop\\\\wayback.json\")",
+      "Bash(node -e ' *)",
+      "Bash(curl -s -o \"C:\\\\Users\\\\jun_s\\\\Desktop\\\\test_tile_m.jpg\" -w \"%{http_code} %{size_download}\" \"https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/28163/8/99/218\")",
+      "Bash(curl -s -o \"C:\\\\Users\\\\jun_s\\\\Desktop\\\\test_tile_id.jpg\" -w \"%{http_code} %{size_download}\" \"https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/WB_2015_R23/8/99/218\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code} %{size_download}' https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/__TRACKED_VAR__/8/99/218)",
+      "Bash(curl -s -L -o /dev/null -w '%{http_code} %{size_download} %{url_effective}' https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/__TRACKED_VAR__/8/99/218)"
     ]
   }
 }
