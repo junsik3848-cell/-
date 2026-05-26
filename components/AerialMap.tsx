@@ -5,6 +5,16 @@ import L from "leaflet";
 
 const VWORLD_KEY = process.env.NEXT_PUBLIC_VWORLD_KEY ?? "";
 
+// ESRI World Imagery Wayback — 연도별 스냅샷 M값
+// https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{M}/{z}/{y}/{x}
+const WAYBACK_M: Record<string, number> = {
+  "2023": 56102, // 2023-12-07
+  "2021": 26120, // 2021-12-21
+  "2019": 4756,  // 2019-12-12
+  "2017": 25521, // 2017-11-16
+  "2015": 28163, // 2015-12-16 (가뭄 심한 해)
+};
+
 interface Props {
   year: string;
 }
@@ -12,7 +22,7 @@ interface Props {
 export default function AerialMap({ year }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
-  const layerRef = useRef<L.TileLayer | L.TileLayer.WMS | null>(null);
+  const layerRef = useRef<L.TileLayer | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -49,39 +59,47 @@ export default function AerialMap({ year }: Props) {
   return <div ref={containerRef} className="w-full h-full" />;
 }
 
-function buildLayer(year: string): L.TileLayer | L.TileLayer.WMS {
-  if (!VWORLD_KEY) {
-    // API 키 없을 때 OpenStreetMap fallback
-    return L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: "© OpenStreetMap contributors",
-    });
+function buildLayer(year: string): L.TileLayer {
+  if (year === "현재") {
+    // Vworld WMTS — 최신 고해상도 한국 위성사진 (타일 순서: z/y/x)
+    if (VWORLD_KEY) {
+      return L.tileLayer(
+        `https://api.vworld.kr/req/wmts/1.0.0/${VWORLD_KEY}/Satellite/{z}/{y}/{x}.jpeg`,
+        {
+          maxZoom: 19,
+          tileSize: 256,
+          attribution: "© 국토지리정보원",
+        }
+      );
+    }
+    // Vworld 키 없을 때 ESRI 최신으로 fallback
+    return esriCurrentLayer();
   }
 
-  if (year === "현재") {
-    // Vworld WMTS — 최신 위성사진 (타일 순서: z/y/x)
+  const m = WAYBACK_M[year];
+  if (m) {
+    // ESRI World Imagery Wayback — 연도별 위성사진 (무료, 인증 불필요)
+    // 타일 순서: z/y/x (row/col)
     return L.tileLayer(
-      `https://api.vworld.kr/req/wmts/1.0.0/${VWORLD_KEY}/Satellite/{z}/{y}/{x}.jpeg`,
+      `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/${m}/{z}/{y}/{x}`,
       {
         maxZoom: 19,
         tileSize: 256,
-        attribution: "© 국토지리정보원",
+        attribution: "© Esri, Maxar, Earthstar Geographics",
       }
     );
   }
 
-  // Vworld WMS — 연도별 항공사진
-  // TIME 파라미터로 해당 연도 항공사진 요청
-  const domain = typeof window !== "undefined" ? window.location.hostname : "localhost";
-  return (L.tileLayer.wms as Function)("https://api.vworld.kr/req/wms", {
-    layers: "photo",
-    format: "image/jpeg",
-    transparent: false,
-    version: "1.3.0",
-    key: VWORLD_KEY,
-    domain,
-    TIME: year,
-    maxZoom: 19,
-    attribution: "© 국토지리정보원",
-  }) as L.TileLayer.WMS;
+  return esriCurrentLayer();
+}
+
+function esriCurrentLayer(): L.TileLayer {
+  return L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      maxZoom: 19,
+      tileSize: 256,
+      attribution: "© Esri, Maxar, Earthstar Geographics",
+    }
+  );
 }
