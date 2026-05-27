@@ -186,6 +186,21 @@ export const LogOutIcon = icon(
   </>
 );
 
+export const LayersIcon = icon(
+  <>
+    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+    <path d="M2 17l10 5 10-5" />
+    <path d="M2 12l10 5 10-5" />
+  </>
+);
+
+export const LocateIcon = icon(
+  <>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 1v4M12 19v4M1 12h4M19 12h4" />
+  </>
+);
+
 export const SettingsIcon = icon(
   <>
     <circle cx="12" cy="12" r="3" />
