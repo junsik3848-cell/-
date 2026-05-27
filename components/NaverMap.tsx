@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 const NAVER_CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID ?? "";
+const NAVER_CLIENT_SECRET = process.env.NEXT_PUBLIC_NAVER_CLIENT_SECRET ?? "";
 
 declare global {
   interface Window { naver: any; }
@@ -47,7 +48,7 @@ export default function NaverMap() {
         existing.addEventListener("load", initMap);
       } else {
         const script = document.createElement("script");
-        script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_CLIENT_ID}`;
+        script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_CLIENT_ID}&ncpClientSecret=${NAVER_CLIENT_SECRET}`;
         script.setAttribute("data-naver-maps", "");
         script.async = true;
         script.onload = initMap;
