@@ -5,10 +5,12 @@ import { useState } from "react";
 import BottomNav from "@/components/BottomNav";
 import { LayersIcon, XIcon } from "@/components/icons";
 
+const NaverMap = dynamic(() => import("@/components/NaverMap"), { ssr: false });
 const AerialMap = dynamic(() => import("@/components/AerialMap"), { ssr: false });
 
+type MapMode = "naver" | "wayback";
+
 const YEARS = [
-  { key: "현재", label: "현재", sub: "최신 위성사진 (Vworld)" },
   { key: "2023", label: "2023년", sub: "2023년 12월" },
   { key: "2021", label: "2021년", sub: "2021년 12월" },
   { key: "2019", label: "2019년", sub: "2019년 12월" },
@@ -17,7 +19,8 @@ const YEARS = [
 ];
 
 export default function MapPage() {
-  const [year, setYear] = useState("현재");
+  const [mapMode, setMapMode] = useState<MapMode>("naver");
+  const [year, setYear] = useState("2021");
   const [panelOpen, setPanelOpen] = useState(false);
 
   const selectedYear = YEARS.find((y) => y.key === year) ?? YEARS[0];
@@ -31,13 +34,16 @@ export default function MapPage() {
         </div>
       </header>
 
-      {/* 지도 영역 — 헤더(56px)와 BottomNav(64px) 사이 */}
+      {/* 지도 영역 */}
       <div className="fixed left-0 right-0 max-w-md mx-auto" style={{ top: 56, bottom: 64 }}>
 
-        {/* 지도 */}
-        <AerialMap year={year} />
-
-        {/* ── 지도 설정 패널 ── */}
+        {/* 지도 — 두 컴포넌트 모두 마운트 유지 (상태 보존), visibility로 전환 */}
+        <div className={mapMode === "naver" ? "w-full h-full" : "hidden"}>
+          <NaverMap />
+        </div>
+        <div className={mapMode === "wayback" ? "w-full h-full" : "hidden"}>
+          <AerialMap year={year} />
+        </div>
 
         {/* 백드롭 */}
         <div
@@ -65,55 +71,94 @@ export default function MapPage() {
             </button>
           </div>
 
-          {/* 항공사진 연도 섹션 */}
-          <div className="px-4 pt-5 pb-3 flex-shrink-0">
+          {/* 지도 유형 선택 */}
+          <div className="px-4 pt-5 flex-shrink-0">
             <p className="text-[10px] font-bold text-surface-tint uppercase tracking-widest mb-3">
-              항공사진 연도
+              지도 유형
             </p>
-            <div className="space-y-1.5">
-              {YEARS.map((y) => {
-                const active = year === y.key;
-                return (
-                  <button
-                    key={y.key}
-                    onClick={() => { setYear(y.key); }}
-                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-between gap-2 ${
-                      active
-                        ? "bg-surface-tint text-on-primary shadow-sm"
-                        : "bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant/40"
-                    }`}
-                  >
-                    <span>{y.label}</span>
-                    {active && (
-                      <span className="text-[10px] font-bold opacity-60 flex-shrink-0">✓ 선택</span>
-                    )}
-                  </button>
-                );
-              })}
+            <div className="space-y-2">
+              {/* 네이버지도 */}
+              <button
+                onClick={() => setMapMode("naver")}
+                className={`w-full text-left px-4 py-3.5 rounded-xl transition-all flex items-center gap-3 ${
+                  mapMode === "naver"
+                    ? "bg-surface-tint text-on-primary"
+                    : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40 hover:text-on-surface"
+                }`}
+              >
+                <span className="text-xl">🗺️</span>
+                <div>
+                  <p className="font-bold text-sm leading-none">네이버지도</p>
+                  <p className={`text-[11px] mt-1 ${mapMode === "naver" ? "text-on-primary/70" : "text-outline"}`}>
+                    일반 · 위성 · 하이브리드
+                  </p>
+                </div>
+                {mapMode === "naver" && (
+                  <span className="ml-auto text-xs font-bold opacity-60">✓</span>
+                )}
+              </button>
+
+              {/* ESRI Wayback */}
+              <button
+                onClick={() => setMapMode("wayback")}
+                className={`w-full text-left px-4 py-3.5 rounded-xl transition-all flex items-center gap-3 ${
+                  mapMode === "wayback"
+                    ? "bg-surface-tint text-on-primary"
+                    : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40 hover:text-on-surface"
+                }`}
+              >
+                <span className="text-xl">🛰️</span>
+                <div>
+                  <p className="font-bold text-sm leading-none">ESRI Wayback</p>
+                  <p className={`text-[11px] mt-1 ${mapMode === "wayback" ? "text-on-primary/70" : "text-outline"}`}>
+                    연도별 위성사진 비교
+                  </p>
+                </div>
+                {mapMode === "wayback" && (
+                  <span className="ml-auto text-xs font-bold opacity-60">✓</span>
+                )}
+              </button>
             </div>
           </div>
 
-          {/* 선택 연도 설명 */}
-          <div className="px-4 pb-4">
-            <div className="rounded-xl bg-surface-container-high border border-outline-variant/30 px-4 py-3">
-              <p className="text-[11px] font-bold text-surface-tint mb-1">
-                {selectedYear.label}
+          {/* 연도 선택 — Wayback 선택 시만 표시 */}
+          <div
+            className={`transition-all duration-300 overflow-hidden ${
+              mapMode === "wayback" ? "opacity-100 max-h-96 mt-4" : "opacity-0 max-h-0"
+            }`}
+          >
+            <div className="px-4 pt-1 pb-4 border-t border-outline-variant/20">
+              <p className="text-[10px] font-bold text-surface-tint uppercase tracking-widest mb-3 pt-4">
+                연도 선택
               </p>
-              <p className="text-[11px] text-on-surface-variant leading-relaxed">
-                {selectedYear.sub}
-              </p>
-              {year === "2015" && (
-                <p className="text-[11px] text-on-surface-variant mt-1.5 leading-relaxed border-t border-outline-variant/30 pt-1.5">
-                  물이 빠진 저수지 바닥 지형으로 숨겨진 포인트를 찾아보세요
+              <div className="space-y-1.5">
+                {YEARS.map((y) => (
+                  <button
+                    key={y.key}
+                    onClick={() => setYear(y.key)}
+                    className={`w-full text-left px-4 py-2.5 rounded-xl text-sm transition-all flex items-center justify-between ${
+                      year === y.key
+                        ? "bg-surface-container-highest border border-surface-tint/60 text-on-surface font-bold"
+                        : "text-on-surface-variant hover:text-on-surface"
+                    }`}
+                  >
+                    <span>{y.label}</span>
+                    {year === y.key && <span className="text-surface-tint text-xs">✓</span>}
+                  </button>
+                ))}
+              </div>
+
+              {/* 선택 연도 설명 */}
+              <div className="mt-3 rounded-xl bg-surface-container-high border border-outline-variant/30 px-3 py-2.5">
+                <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                  {selectedYear.sub}
                 </p>
-              )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* ── 플로팅 UI ── */}
-
-        {/* 오른쪽: 레이어 버튼 */}
+        {/* 레이어 버튼 (우측 상단) */}
         <div className="absolute right-3 top-3 z-[800]">
           <button
             onClick={() => setPanelOpen((v) => !v)}
@@ -127,7 +172,7 @@ export default function MapPage() {
           </button>
         </div>
 
-        {/* 왼쪽: 현재 선택 연도 뱃지 (패널 닫혔을 때만) */}
+        {/* 현재 모드 뱃지 (좌측 상단, 패널 닫혔을 때) */}
         <div
           className={`absolute top-3 left-3 z-[800] transition-opacity duration-200 ${
             panelOpen ? "opacity-0 pointer-events-none" : "opacity-100"
@@ -137,9 +182,9 @@ export default function MapPage() {
             onClick={() => setPanelOpen(true)}
             className="glass-panel rounded-full px-4 py-2 flex items-center gap-2 border border-outline-variant/30 hover:border-surface-tint/50 transition-colors"
           >
-            <LayersIcon size={12} className="text-surface-tint" />
+            <span className="text-xs">{mapMode === "naver" ? "🗺️" : "🛰️"}</span>
             <span className="text-xs font-bold text-on-surface">
-              {selectedYear.label}
+              {mapMode === "naver" ? "네이버지도" : `Wayback ${year}`}
             </span>
           </button>
         </div>
