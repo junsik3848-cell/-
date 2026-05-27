@@ -47,7 +47,7 @@ export default function NaverMap() {
         existing.addEventListener("load", initMap);
       } else {
         const script = document.createElement("script");
-        script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_CLIENT_ID}`;
+        script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${NAVER_CLIENT_ID}`;
         script.setAttribute("data-naver-maps", "");
         script.async = true;
         script.onload = initMap;
