@@ -4,6 +4,9 @@ import dynamic from "next/dynamic";
 import { useState } from "react";
 import BottomNav from "@/components/BottomNav";
 import { LayersIcon, XIcon } from "@/components/icons";
+import SpotInfoSheet from "@/components/SpotInfoSheet";
+import type { SpotRow } from "@/components/NaverMap";
+import { useAuth } from "@/context/AuthContext";
 
 const NaverMap = dynamic(() => import("@/components/NaverMap"), { ssr: false });
 const AerialMap = dynamic(() => import("@/components/AerialMap"), { ssr: false });
@@ -18,10 +21,17 @@ const YEARS = [
   { key: "2015", label: "2015년 🔥", sub: "극심한 가뭄 — 저수지 바닥 노출" },
 ];
 
+const ADMIN_EMAIL = "junsik3848@gmail.com";
+
 export default function MapPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
+
   const [mapMode, setMapMode] = useState<MapMode>("naver");
   const [year, setYear] = useState("2021");
   const [panelOpen, setPanelOpen] = useState(false);
+  const [selectedSpot, setSelectedSpot] = useState<SpotRow | null>(null);
+  const [editMode, setEditMode] = useState(false);
 
   const selectedYear = YEARS.find((y) => y.key === year) ?? YEARS[0];
 
@@ -39,7 +49,11 @@ export default function MapPage() {
 
         {/* 지도 — 두 컴포넌트 모두 마운트 유지 (상태 보존), visibility로 전환 */}
         <div className={mapMode === "naver" ? "absolute inset-0" : "hidden"}>
-          <NaverMap />
+          <NaverMap
+            onSpotClick={editMode ? undefined : setSelectedSpot}
+            editMode={editMode}
+            onSpotsChanged={() => {}}
+          />
         </div>
         <div className={mapMode === "wayback" ? "absolute inset-0" : "hidden"}>
           <AerialMap year={year} visible={mapMode === "wayback"} />
@@ -159,7 +173,7 @@ export default function MapPage() {
         </div>
 
         {/* 레이어 버튼 (우측 상단) */}
-        <div className="absolute right-3 top-16 z-[800]">
+        <div className="absolute right-3 top-16 z-[800] flex flex-col gap-2">
           <button
             onClick={() => setPanelOpen((v) => !v)}
             className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${
@@ -170,10 +184,26 @@ export default function MapPage() {
           >
             <LayersIcon size={20} />
           </button>
+
+          {/* 관리자 편집 모드 버튼 */}
+          {isAdmin && mapMode === "naver" && (
+            <button
+              onClick={() => setEditMode((v) => !v)}
+              className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg text-xs font-bold transition-all ${
+                editMode
+                  ? "bg-red-500 text-white"
+                  : "glass-panel text-on-surface-variant border border-outline-variant/40"
+              }`}
+              title={editMode ? "편집 종료" : "핀 편집"}
+            >
+              {editMode ? "완료" : "✏️"}
+            </button>
+          )}
         </div>
 
       </div>
 
+      <SpotInfoSheet spot={selectedSpot} onClose={() => setSelectedSpot(null)} />
       <BottomNav />
     </div>
   );
