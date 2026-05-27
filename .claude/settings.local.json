@@ -36,7 +36,8 @@
       "Bash(curl -s -o \"C:\\\\Users\\\\jun_s\\\\Desktop\\\\test_tile_m.jpg\" -w \"%{http_code} %{size_download}\" \"https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/28163/8/99/218\")",
       "Bash(curl -s -o \"C:\\\\Users\\\\jun_s\\\\Desktop\\\\test_tile_id.jpg\" -w \"%{http_code} %{size_download}\" \"https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/WB_2015_R23/8/99/218\")",
       "Bash(curl -s -o /dev/null -w '%{http_code} %{size_download}' https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/__TRACKED_VAR__/8/99/218)",
-      "Bash(curl -s -L -o /dev/null -w '%{http_code} %{size_download} %{url_effective}' https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/__TRACKED_VAR__/8/99/218)"
+      "Bash(curl -s -L -o /dev/null -w '%{http_code} %{size_download} %{url_effective}' https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/__TRACKED_VAR__/8/99/218)",
+      "Bash(git commit *)"
     ]
   }
 }

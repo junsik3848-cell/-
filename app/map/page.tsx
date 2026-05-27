@@ -38,11 +38,11 @@ export default function MapPage() {
       <div className="fixed left-0 right-0 max-w-md mx-auto" style={{ top: 56, bottom: 64 }}>
 
         {/* 지도 — 두 컴포넌트 모두 마운트 유지 (상태 보존), visibility로 전환 */}
-        <div className={mapMode === "naver" ? "w-full h-full" : "hidden"}>
+        <div className={mapMode === "naver" ? "absolute inset-0" : "hidden"}>
           <NaverMap />
         </div>
-        <div className={mapMode === "wayback" ? "w-full h-full" : "hidden"}>
-          <AerialMap year={year} />
+        <div className={mapMode === "wayback" ? "absolute inset-0" : "hidden"}>
+          <AerialMap year={year} visible={mapMode === "wayback"} />
         </div>
 
         {/* 백드롭 */}
@@ -159,7 +159,7 @@ export default function MapPage() {
         </div>
 
         {/* 레이어 버튼 (우측 상단) */}
-        <div className="absolute right-3 top-3 z-[800]">
+        <div className="absolute right-3 top-16 z-[800]">
           <button
             onClick={() => setPanelOpen((v) => !v)}
             className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${
@@ -172,22 +172,6 @@ export default function MapPage() {
           </button>
         </div>
 
-        {/* 현재 모드 뱃지 (좌측 상단, 패널 닫혔을 때) */}
-        <div
-          className={`absolute top-3 left-3 z-[800] transition-opacity duration-200 ${
-            panelOpen ? "opacity-0 pointer-events-none" : "opacity-100"
-          }`}
-        >
-          <button
-            onClick={() => setPanelOpen(true)}
-            className="glass-panel rounded-full px-4 py-2 flex items-center gap-2 border border-outline-variant/30 hover:border-surface-tint/50 transition-colors"
-          >
-            <span className="text-xs">{mapMode === "naver" ? "🗺️" : "🛰️"}</span>
-            <span className="text-xs font-bold text-on-surface">
-              {mapMode === "naver" ? "네이버지도" : `Wayback ${year}`}
-            </span>
-          </button>
-        </div>
       </div>
 
       <BottomNav />

@@ -17,9 +17,10 @@ const WAYBACK_M: Record<string, number> = {
 
 interface Props {
   year: string;
+  visible: boolean;
 }
 
-export default function AerialMap({ year }: Props) {
+export default function AerialMap({ year, visible }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.TileLayer | null>(null);
@@ -47,6 +48,13 @@ export default function AerialMap({ year }: Props) {
       layerRef.current = null;
     };
   }, []);
+
+  // visible이 될 때 컨테이너 크기 재계산 (hidden → visible 전환 시 Leaflet 크기 보정)
+  useEffect(() => {
+    if (visible && mapRef.current) {
+      setTimeout(() => mapRef.current?.invalidateSize(), 50);
+    }
+  }, [visible]);
 
   useEffect(() => {
     const map = mapRef.current;

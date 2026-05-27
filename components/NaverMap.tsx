@@ -11,8 +11,12 @@ declare global {
 export default function NaverMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+  const didInit = useRef(false);
 
   useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
+
     function initMap() {
       if (!containerRef.current || mapRef.current) return;
       const { naver } = window;
@@ -29,6 +33,7 @@ export default function NaverMap() {
             naver.maps.MapTypeId.HYBRID,
           ],
         },
+        logoControl: false,
         zoomControl: true,
         zoomControlOptions: {
           style: naver.maps.ZoomControlStyle.SMALL,
@@ -38,10 +43,8 @@ export default function NaverMap() {
     }
 
     if (window.naver?.maps) {
-      // SDK가 이미 로드된 경우 (탭 전환 후 돌아올 때)
       initMap();
     } else {
-      // 중복 스크립트 방지
       const existing = document.querySelector("script[data-naver-maps]");
       if (existing) {
         existing.addEventListener("load", initMap);
@@ -54,10 +57,6 @@ export default function NaverMap() {
         document.head.appendChild(script);
       }
     }
-
-    return () => {
-      mapRef.current = null;
-    };
   }, []);
 
   return <div ref={containerRef} className="w-full h-full" />;
