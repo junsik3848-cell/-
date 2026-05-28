@@ -241,6 +241,9 @@ function PostCard({
                   {post.location}
                 </p>
               )}
+              <p className="text-white/60 text-xs mt-0.5">
+                {new Date(post.created_at).toLocaleDateString("ko-KR")}
+              </p>
             </div>
           </div>
         </div>
@@ -289,7 +292,6 @@ function PostCard({
         </div>
 
         <p className="text-sm text-on-surface leading-relaxed">
-          <span className="font-semibold mr-1.5">{post.users.username}</span>
           {post.caption}
         </p>
 
@@ -299,9 +301,6 @@ function PostCard({
           </Link>
         )}
 
-        <p className="mt-1 text-[11px] text-outline">
-          {new Date(post.created_at).toLocaleDateString("ko-KR")}
-        </p>
       </div>
     </article>
   );
