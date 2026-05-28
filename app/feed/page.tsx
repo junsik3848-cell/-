@@ -228,16 +228,16 @@ function PostCard({
             <img
               src={avatar}
               alt={post.users?.username}
-              className="w-9 h-9 rounded-full object-cover ring-1 ring-surface-tint/60"
+              className="w-9 h-9 rounded-full object-cover"
             />
           </Link>
           <div>
             <p className="text-sm font-semibold text-on-surface leading-none">{post.users?.username}</p>
             <p className="text-xs text-on-surface-variant mt-0.5 flex items-center gap-1">
-              {new Date(post.created_at).toLocaleDateString("ko-KR")}
+              {new Date(post.created_at).toLocaleDateString("ko-KR").replace(/\.$/, "")}
               {post.location && (
                 <>
-                  <span className="mx-0.5">·</span>
+                  <span className="mx-0.5"> </span>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                   </svg>
@@ -280,7 +280,7 @@ function PostCard({
       </div>
 
       {/* 액션 바 */}
-      <div className="px-3 py-2 flex items-center justify-between">
+      <div className="px-3 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
             onClick={onLike}
@@ -288,11 +288,11 @@ function PostCard({
               post.isLiked ? "text-red-400" : "text-on-surface-variant hover:text-on-surface"
             }`}
           >
-            <HeartIcon size={22} fill={post.isLiked ? "currentColor" : "none"} />
+            <HeartIcon size={25} fill={post.isLiked ? "currentColor" : "none"} />
             <span className="text-xs font-medium">{post.likes_count.toLocaleString()}</span>
           </button>
           <Link href={`/post/${post.id}`} className="flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface transition-colors">
-            <MessageCircleIcon size={22} />
+            <MessageCircleIcon size={25} />
             <span className="text-xs font-medium">{post.comments_count}</span>
           </Link>
         </div>
@@ -302,7 +302,7 @@ function PostCard({
             post.isBookmarked ? "text-surface-tint" : "text-on-surface-variant hover:text-on-surface"
           }`}
         >
-          <BookmarkIcon size={22} fill={post.isBookmarked ? "currentColor" : "none"} />
+          <BookmarkIcon size={25} fill={post.isBookmarked ? "currentColor" : "none"} />
         </button>
       </div>
     </article>

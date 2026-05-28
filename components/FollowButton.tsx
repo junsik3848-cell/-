@@ -42,7 +42,7 @@ export default function FollowButton({
   return (
     <button
       onClick={toggle}
-      className="px-4 py-1.5 rounded-full border border-surface-tint text-surface-tint text-xs font-semibold hover:bg-surface-tint/10 transition-colors"
+      className="px-4 py-1.5 rounded-full border border-white text-white text-xs font-semibold hover:bg-white/10 transition-colors"
     >
       팔로우
     </button>
