@@ -152,9 +152,8 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-background max-w-md mx-auto">
-      <header className="fixed top-0 left-0 right-0 z-40 max-w-md mx-auto bg-surface-container border-b border-outline-variant/30">
+      <header className="fixed top-0 left-0 right-0 z-40 max-w-md mx-auto bg-background border-b border-outline-variant/30">
         <div className="flex items-center justify-between px-5 h-14">
-          <div className="w-10" />
           <h1 className="font-brand text-xl font-bold tracking-widest text-surface-tint">LUNKER</h1>
           <button className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors">
             <BellIcon size={22} />
@@ -220,7 +219,7 @@ function PostCard({
   const avatar = post.users?.avatar_url ?? `https://picsum.photos/seed/${post.users?.username ?? "user"}/80/80`;
 
   return (
-    <article className="mx-3 my-2 rounded-2xl overflow-hidden bg-surface-container-low">
+    <article className="mx-3 my-2 rounded-2xl overflow-hidden bg-surface-container">
       {/* 불투명 헤더 */}
       <div className="flex items-center justify-between px-3 py-2.5">
         <div className="flex items-center gap-2.5">
