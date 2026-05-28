@@ -16,25 +16,69 @@ export interface SpotRow {
   lng: number;
 }
 
+export interface FavoriteRow {
+  id: string;
+  spot_id: string | null;
+  name: string;
+  lat: number;
+  lng: number;
+}
+
 interface Props {
   onSpotClick?: (spot: SpotRow) => void;
   editMode?: boolean;
   onSpotsChanged?: () => void;
+  mapType?: "normal" | "satellite" | "hybrid";
+  favorites?: FavoriteRow[];
+  centerTo?: { lat: number; lng: number } | null;
+  onLongPress?: (lat: number, lng: number) => void;
 }
 
-export default function NaverMap({ onSpotClick, editMode = false, onSpotsChanged }: Props) {
+export default function NaverMap({
+  onSpotClick,
+  editMode = false,
+  onSpotsChanged,
+  mapType = "normal",
+  favorites = [],
+  centerTo,
+  onLongPress,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const didInit = useRef(false);
   const markersRef = useRef<Map<string, any>>(new Map());
+  const favMarkersRef = useRef<Map<string, any>>(new Map());
+  const favSpotIdsRef = useRef<Set<string>>(new Set());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editModeRef = useRef(editMode);
   const onSpotClickRef = useRef(onSpotClick);
   const onSpotsChangedRef = useRef(onSpotsChanged);
+  const onLongPressRef = useRef(onLongPress);
 
   useEffect(() => { editModeRef.current = editMode; }, [editMode]);
   useEffect(() => { onSpotClickRef.current = onSpotClick; }, [onSpotClick]);
   useEffect(() => { onSpotsChangedRef.current = onSpotsChanged; }, [onSpotsChanged]);
+  useEffect(() => { onLongPressRef.current = onLongPress; }, [onLongPress]);
+
+  // 지도 타입 변경
+  useEffect(() => {
+    if (!mapRef.current || !window.naver) return;
+    const { naver } = window;
+    const typeMap = {
+      normal: naver.maps.MapTypeId.NORMAL,
+      satellite: naver.maps.MapTypeId.SATELLITE,
+      hybrid: naver.maps.MapTypeId.HYBRID,
+    };
+    mapRef.current.setMapTypeId(typeMap[mapType]);
+  }, [mapType]);
+
+  // 지도 이동 명령
+  useEffect(() => {
+    if (!centerTo || !mapRef.current || !window.naver) return;
+    const { naver } = window;
+    mapRef.current.setCenter(new naver.maps.LatLng(centerTo.lat, centerTo.lng));
+    mapRef.current.setZoom(14);
+  }, [centerTo]);
 
   // 편집 모드 바뀌면 마커 재생성
   useEffect(() => {
@@ -43,6 +87,51 @@ export default function NaverMap({ onSpotClick, editMode = false, onSpotsChanged
     markersRef.current.clear();
     loadMarkers();
   }, [editMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 즐겨찾기 핀 렌더링
+  useEffect(() => {
+    if (!mapRef.current || !window.naver) return;
+    const { naver } = window;
+
+    // 즐겨찾기 spot_id 세트 갱신
+    favSpotIdsRef.current = new Set(favorites.filter((f) => f.spot_id).map((f) => f.spot_id!));
+
+    // 즐겨찾기된 spot의 초록 핀이 이미 있으면 제거 (노란 핀으로 대체)
+    favorites.forEach((fav) => {
+      if (fav.spot_id && markersRef.current.has(fav.spot_id)) {
+        markersRef.current.get(fav.spot_id)?.setMap(null);
+        markersRef.current.delete(fav.spot_id);
+      }
+    });
+
+    favMarkersRef.current.forEach((m) => m.setMap(null));
+    favMarkersRef.current.clear();
+
+    favorites.forEach((fav) => {
+      const marker = new naver.maps.Marker({
+        position: new naver.maps.LatLng(fav.lat, fav.lng),
+        map: mapRef.current,
+        icon: {
+          content: `<div style="
+            background:#ffd43b;border-radius:50%;
+            width:15px;height:15px;
+            display:flex;align-items:center;justify-content:center;
+            box-shadow:0 1px 5px rgba(255,212,59,0.9);
+            cursor:pointer;
+          ">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </div>`,
+          anchor: new naver.maps.Point(7, 7),
+        },
+      });
+      naver.maps.Event.addListener(marker, "click", () => {
+        onSpotClickRef.current?.({ id: fav.id, name: fav.name, lat: fav.lat, lng: fav.lng });
+      });
+      favMarkersRef.current.set(fav.id, marker);
+    });
+  }, [favorites]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function markerContent(editable: boolean) {
     if (editable) {
@@ -104,6 +193,7 @@ export default function NaverMap({ onSpotClick, editMode = false, onSpotsChanged
 
     spots.forEach((spot) => {
       if (markersRef.current.has(spot.id)) return;
+      if (favSpotIdsRef.current.has(spot.id)) return; // 즐겨찾기 → 노란 핀이 담당
 
       const editable = editModeRef.current;
       const marker = new naver.maps.Marker({
@@ -117,7 +207,6 @@ export default function NaverMap({ onSpotClick, editMode = false, onSpotsChanged
       });
 
       if (editable) {
-        // 드래그 끝 → Supabase UPDATE
         naver.maps.Event.addListener(marker, "dragend", async () => {
           const pos = marker.getPosition();
           await supabase
@@ -126,7 +215,6 @@ export default function NaverMap({ onSpotClick, editMode = false, onSpotsChanged
             .eq("id", spot.id);
         });
 
-        // 클릭 → 삭제
         naver.maps.Event.addListener(marker, "click", async () => {
           if (!confirm(`"${spot.name}" 핀을 삭제할까요?`)) return;
           await supabase.from("fishing_spots").delete().eq("id", spot.id);
@@ -155,21 +243,9 @@ export default function NaverMap({ onSpotClick, editMode = false, onSpotsChanged
         center: new naver.maps.LatLng(36.5, 127.5),
         zoom: 8,
         mapTypeId: naver.maps.MapTypeId.NORMAL,
-        mapTypeControl: true,
-        mapTypeControlOptions: {
-          style: naver.maps.MapTypeControlStyle.BUTTON,
-          mapTypeIds: [
-            naver.maps.MapTypeId.NORMAL,
-            naver.maps.MapTypeId.SATELLITE,
-            naver.maps.MapTypeId.HYBRID,
-          ],
-        },
+        mapTypeControl: false,
         logoControl: false,
-        zoomControl: true,
-        zoomControlOptions: {
-          style: naver.maps.ZoomControlStyle.SMALL,
-          position: naver.maps.Position.RIGHT_CENTER,
-        },
+        zoomControl: false,
       });
 
       // 지도 이동/줌 완료 후 마커 갱신 (디바운스 500ms)
@@ -195,6 +271,41 @@ export default function NaverMap({ onSpotClick, editMode = false, onSpotsChanged
         onSpotsChangedRef.current?.();
         loadMarkers();
       });
+
+      // 데스크탑: 우클릭 → 즐겨찾기 커스텀 핀
+      naver.maps.Event.addListener(mapRef.current, "rightclick", (e: any) => {
+        if (editModeRef.current) return;
+        onLongPressRef.current?.(e.coord.lat(), e.coord.lng());
+      });
+
+      // 모바일: 길게 누르기 (600ms) → 즐겨찾기 커스텀 핀
+      let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+      let touchMoved = false;
+
+      containerRef.current!.addEventListener("touchstart", (e) => {
+        if (editModeRef.current) return;
+        touchMoved = false;
+        const touch = e.touches[0];
+        longPressTimer = setTimeout(() => {
+          if (touchMoved) return;
+          const rect = containerRef.current!.getBoundingClientRect();
+          const x = touch.clientX - rect.left;
+          const y = touch.clientY - rect.top;
+          const coord = mapRef.current.fromContainerPixelToCoord(
+            new naver.maps.Point(x, y)
+          );
+          onLongPressRef.current?.(coord.lat(), coord.lng());
+        }, 600);
+      }, { passive: true });
+
+      containerRef.current!.addEventListener("touchmove", () => {
+        touchMoved = true;
+        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+      }, { passive: true });
+
+      containerRef.current!.addEventListener("touchend", () => {
+        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+      }, { passive: true });
     }
 
     if (window.naver?.maps) {

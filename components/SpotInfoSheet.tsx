@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { XIcon } from "@/components/icons";
+import { XIcon, StarIcon } from "@/components/icons";
 import { createBrowserClient } from "@supabase/ssr";
 import type { SpotRow } from "@/components/NaverMap";
 
@@ -48,9 +48,11 @@ function waterLevelColor(pct: number): string {
 interface Props {
   spot: SpotRow | null;
   onClose: () => void;
+  isFavorited?: boolean;
+  onToggleFavorite?: () => void;
 }
 
-export default function SpotInfoSheet({ spot, onClose }: Props) {
+export default function SpotInfoSheet({ spot, onClose, isFavorited = false, onToggleFavorite }: Props) {
   const [weather, setWeather] = useState<Weather | null>(null);
   const [catches, setCatches] = useState<CatchPost[]>([]);
   const [loadingWeather, setLoadingWeather] = useState(false);
@@ -126,12 +128,26 @@ export default function SpotInfoSheet({ spot, onClose }: Props) {
                 <h2 className="text-base font-bold text-on-surface">{spot.name}</h2>
                 <p className="text-xs text-on-surface-variant mt-0.5">저수지</p>
               </div>
-              <button
-                onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors flex-shrink-0"
-              >
-                <XIcon size={16} />
-              </button>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {onToggleFavorite && (
+                  <button
+                    onClick={onToggleFavorite}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors"
+                  >
+                    <StarIcon
+                      size={16}
+                      fill={isFavorited ? "#ffd43b" : "none"}
+                      stroke={isFavorited ? "#ffd43b" : "currentColor"}
+                    />
+                  </button>
+                )}
+                <button
+                  onClick={onClose}
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                >
+                  <XIcon size={16} />
+                </button>
+              </div>
             </div>
 
             {/* 날씨 + 수위 */}
