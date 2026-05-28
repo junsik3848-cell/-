@@ -162,73 +162,77 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="min-h-screen bg-background max-w-md mx-auto">
-      <header className="fixed top-0 left-0 right-0 z-40 max-w-md mx-auto bg-surface-container border-b border-outline-variant/30">
-        <div className="flex items-center justify-between px-4 h-14">
-          <Link href="/feed" className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors">
-            <ArrowLeftIcon size={22} />
-          </Link>
-          <h1 className="font-brand text-xl font-bold tracking-widest text-surface-tint">LUNKER</h1>
-          <div className="relative">
-            <button
-              onClick={() => setShowMenu((v) => !v)}
-              className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
-            >
-              <MoreVerticalIcon size={22} />
-            </button>
-            {showMenu && (
-              <>
-                <div className="fixed inset-0 z-50" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-11 z-50 w-44 glass-panel rounded-xl border border-outline-variant/50 py-1 shadow-xl">
-                  {myUserId === post?.user_id && (
-                    <button
-                      onClick={() => { setShowMenu(false); handleDelete(); }}
-                      className="w-full text-left px-4 py-3 text-sm text-error hover:bg-surface-container transition-colors"
-                    >
-                      게시글 삭제하기
-                    </button>
+      <main className="pb-32">
+        {/* 상단 포스트 헤더 */}
+        <div className="sticky top-0 z-40 bg-background border-b border-outline-variant/30">
+          <div className="flex items-center justify-between px-3 h-14">
+            <div className="flex items-center gap-2.5">
+              <Link href="/feed" className="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors">
+                <ArrowLeftIcon size={22} />
+              </Link>
+              <Link href={`/profile/${post.user_id}`}>
+                <img
+                  src={authorAvatar}
+                  alt={post.users.username}
+                  className="w-9 h-9 rounded-full object-cover"
+                />
+              </Link>
+              <div>
+                <p className="text-sm font-semibold text-on-surface leading-none">{post.users.username}</p>
+                <p className="text-xs text-on-surface-variant mt-0.5 flex items-center gap-1">
+                  {new Date(post.created_at).toLocaleDateString("ko-KR").replace(/\.$/, "")}
+                  {post.location && (
+                    <>
+                      <span className="mx-0.5"> </span>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                      </svg>
+                      {post.location}
+                    </>
                   )}
-                  {myUserId !== post?.user_id && (
-                    <button
-                      onClick={() => setShowMenu(false)}
-                      className="w-full text-left px-4 py-3 text-sm text-on-surface-variant hover:bg-surface-container transition-colors"
-                    >
-                      신고하기
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <FollowButton postUserId={post.user_id} myUserId={myUserId} />
+              <div className="relative">
+                <button
+                  onClick={() => setShowMenu((v) => !v)}
+                  className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
+                >
+                  <MoreVerticalIcon size={22} />
+                </button>
+                {showMenu && (
+                  <>
+                    <div className="fixed inset-0 z-50" onClick={() => setShowMenu(false)} />
+                    <div className="absolute right-0 top-11 z-50 w-44 glass-panel rounded-xl border border-outline-variant/50 py-1 shadow-xl">
+                      {myUserId === post?.user_id && (
+                        <button
+                          onClick={() => { setShowMenu(false); handleDelete(); }}
+                          className="w-full text-left px-4 py-3 text-sm text-error hover:bg-surface-container transition-colors"
+                        >
+                          게시글 삭제하기
+                        </button>
+                      )}
+                      {myUserId !== post?.user_id && (
+                        <button
+                          onClick={() => setShowMenu(false)}
+                          className="w-full text-left px-4 py-3 text-sm text-on-surface-variant hover:bg-surface-container transition-colors"
+                        >
+                          신고하기
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </header>
 
-      <main className="pt-14 pb-32">
         {/* 사진 */}
         <div className="relative">
           <ImageCarousel images={post.images.length > 0 ? post.images : ["https://picsum.photos/seed/empty/400/500"]} />
-          <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Link href={`/profile/${post.user_id}`}>
-                  <img
-                    src={authorAvatar}
-                    alt={post.users.username}
-                    className="w-10 h-10 rounded-full object-cover ring-2 ring-surface-tint/60"
-                  />
-                </Link>
-                <div className="pointer-events-none">
-                  <p className="text-white text-sm font-semibold leading-none">{post.users.username}</p>
-                  {post.location && (
-                    <p className="text-white/70 text-xs mt-1 flex items-center gap-1">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" /></svg>
-                      {post.location}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <FollowButton postUserId={post.user_id} myUserId={myUserId} />
-            </div>
-          </div>
 
           {(post.weight || post.length) && (
             <div className="absolute bottom-10 left-3 flex gap-2 pointer-events-none">
@@ -273,15 +277,11 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
         </div>
 
         {/* 캡션 */}
-        <div className="px-4 py-3 border-b border-outline-variant/30">
-          <p className="text-sm text-on-surface leading-relaxed">
-            <span className="font-semibold mr-1.5">{post.users.username}</span>
-            {post.caption}
-          </p>
-          <p className="mt-2 text-xs text-outline">
-            {new Date(post.created_at).toLocaleDateString("ko-KR")}
-          </p>
-        </div>
+        {post.caption && (
+          <div className="px-4 py-3 border-b border-outline-variant/30">
+            <p className="text-sm text-on-surface leading-relaxed">{post.caption}</p>
+          </div>
+        )}
 
         {/* 댓글 목록 */}
         <div className="px-4 py-3 space-y-4">
