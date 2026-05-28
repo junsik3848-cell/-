@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import ImageCarousel from "@/components/ImageCarousel";
 import { BellIcon, HeartIcon, MessageCircleIcon, BookmarkIcon } from "@/components/icons";
+import FollowButton from "@/components/FollowButton";
 import { createClient } from "@/lib/supabase/client";
 
 const PAGE_SIZE = 10;
@@ -178,6 +179,7 @@ export default function FeedPage() {
               <PostCard
                 key={post.id}
                 post={post}
+                myUserId={myUserId}
                 onLike={() => toggleLike(post.id)}
                 onBookmark={() => toggleBookmark(post.id)}
               />
@@ -208,48 +210,53 @@ function PostCard({
   post,
   onLike,
   onBookmark,
+  myUserId,
 }: {
   post: FeedPost;
   onLike: () => void;
   onBookmark: () => void;
+  myUserId: string | null;
 }) {
   const avatar = post.users?.avatar_url ?? `https://picsum.photos/seed/${post.users?.username ?? "user"}/80/80`;
 
   return (
-    <article className="border-b border-outline-variant/30">
+    <article className="mx-3 my-2 rounded-2xl overflow-hidden bg-surface-container-low">
+      {/* 불투명 헤더 */}
+      <div className="flex items-center justify-between px-3 py-2.5">
+        <div className="flex items-center gap-2.5">
+          <Link href={`/profile/${post.user_id}`}>
+            <img
+              src={avatar}
+              alt={post.users?.username}
+              className="w-9 h-9 rounded-full object-cover ring-1 ring-surface-tint/60"
+            />
+          </Link>
+          <div>
+            <p className="text-sm font-semibold text-on-surface leading-none">{post.users?.username}</p>
+            <p className="text-xs text-on-surface-variant mt-0.5">
+              {new Date(post.created_at).toLocaleDateString("ko-KR")}
+              {post.location ? ` · ${post.location}` : ""}
+            </p>
+          </div>
+        </div>
+        <FollowButton postUserId={post.user_id} myUserId={myUserId} />
+      </div>
+
+      {/* 캡션 (이미지 위, 2줄 제한) */}
+      {post.caption && (
+        <p className="px-3 pb-2 text-sm text-on-surface leading-relaxed line-clamp-2">
+          {post.caption}
+        </p>
+      )}
+
+      {/* 이미지 */}
       <div className="relative">
         <Link href={`/post/${post.id}`} className="block">
           <ImageCarousel images={post.images.length > 0 ? post.images : ["https://picsum.photos/seed/empty/400/500"]} />
         </Link>
 
-        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent">
-          <div className="flex items-center gap-2.5">
-            <Link href={`/profile/${post.user_id}`}>
-              <img
-                src={avatar}
-                alt={post.users?.username}
-                className="w-8 h-8 rounded-full object-cover ring-1 ring-surface-tint/60"
-              />
-            </Link>
-            <div className="pointer-events-none">
-              <p className="text-white text-sm font-semibold leading-none">{post.users?.username}</p>
-              {post.location && (
-                <p className="text-white/70 text-xs mt-0.5 flex items-center gap-1">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                  </svg>
-                  {post.location}
-                </p>
-              )}
-              <p className="text-white/60 text-xs mt-0.5">
-                {new Date(post.created_at).toLocaleDateString("ko-KR")}
-              </p>
-            </div>
-          </div>
-        </div>
-
         {(post.weight || post.length) && (
-          <div className="absolute bottom-10 left-3 flex gap-2 pointer-events-none">
+          <div className="absolute bottom-3 left-3 flex gap-2 pointer-events-none">
             {post.weight && (
               <span className="glass-panel px-3 py-1.5 rounded-full text-xs font-bold text-surface-tint flex items-center gap-1.5">
                 ⚖ {post.weight}kg
@@ -264,43 +271,31 @@ function PostCard({
         )}
       </div>
 
-      <div className="px-4 py-3 bg-surface-container-low">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onLike}
-              className={`flex items-center gap-1.5 transition-colors ${
-                post.isLiked ? "text-red-400" : "text-on-surface-variant hover:text-on-surface"
-              }`}
-            >
-              <HeartIcon size={22} fill={post.isLiked ? "currentColor" : "none"} />
-              <span className="text-xs font-medium">{post.likes_count.toLocaleString()}</span>
-            </button>
-            <Link href={`/post/${post.id}`} className="flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface transition-colors">
-              <MessageCircleIcon size={22} />
-              <span className="text-xs font-medium">{post.comments_count}</span>
-            </Link>
-          </div>
+      {/* 액션 바 */}
+      <div className="px-3 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-4">
           <button
-            onClick={onBookmark}
-            className={`transition-colors ${
-              post.isBookmarked ? "text-surface-tint" : "text-on-surface-variant hover:text-on-surface"
+            onClick={onLike}
+            className={`flex items-center gap-1.5 transition-colors ${
+              post.isLiked ? "text-red-400" : "text-on-surface-variant hover:text-on-surface"
             }`}
           >
-            <BookmarkIcon size={22} fill={post.isBookmarked ? "currentColor" : "none"} />
+            <HeartIcon size={22} fill={post.isLiked ? "currentColor" : "none"} />
+            <span className="text-xs font-medium">{post.likes_count.toLocaleString()}</span>
           </button>
-        </div>
-
-        <p className="text-sm text-on-surface leading-relaxed">
-          {post.caption}
-        </p>
-
-        {post.comments_count > 0 && (
-          <Link href={`/post/${post.id}`} className="block mt-1.5 text-xs text-on-surface-variant hover:text-on-surface transition-colors">
-            댓글 {post.comments_count}개 모두 보기
+          <Link href={`/post/${post.id}`} className="flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface transition-colors">
+            <MessageCircleIcon size={22} />
+            <span className="text-xs font-medium">{post.comments_count}</span>
           </Link>
-        )}
-
+        </div>
+        <button
+          onClick={onBookmark}
+          className={`transition-colors ${
+            post.isBookmarked ? "text-surface-tint" : "text-on-surface-variant hover:text-on-surface"
+          }`}
+        >
+          <BookmarkIcon size={22} fill={post.isBookmarked ? "currentColor" : "none"} />
+        </button>
       </div>
     </article>
   );

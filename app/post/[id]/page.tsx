@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import ImageCarousel from "@/components/ImageCarousel";
 import { ArrowLeftIcon, MoreVerticalIcon, HeartIcon, MessageCircleIcon, ShareIcon, BookmarkIcon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
+import FollowButton from "@/components/FollowButton";
 
 type PostDetail = {
   id: string;
@@ -350,50 +351,3 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   );
 }
 
-function FollowButton({ postUserId, myUserId }: { postUserId: string; myUserId: string | null }) {
-  const router = useRouter();
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!myUserId || myUserId === postUserId) { setIsLoaded(true); return; }
-    const supabase = createClient();
-    supabase
-      .from("follows")
-      .select("id")
-      .eq("follower_id", myUserId)
-      .eq("following_id", postUserId)
-      .maybeSingle()
-      .then(({ data }) => {
-        setIsFollowing(!!data);
-        setIsLoaded(true);
-      });
-  }, [myUserId, postUserId]);
-
-  if (!isLoaded || myUserId === postUserId) return null;
-
-  async function toggle() {
-    if (!myUserId) { router.push("/login"); return; }
-    const supabase = createClient();
-    if (isFollowing) {
-      await supabase.from("follows").delete().eq("follower_id", myUserId).eq("following_id", postUserId);
-      setIsFollowing(false);
-    } else {
-      await supabase.from("follows").insert({ follower_id: myUserId, following_id: postUserId });
-      setIsFollowing(true);
-    }
-  }
-
-  return (
-    <button
-      onClick={toggle}
-      className={`px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
-        isFollowing
-          ? "border-outline-variant text-on-surface-variant hover:border-error hover:text-error"
-          : "border-surface-tint text-surface-tint hover:bg-surface-tint/10"
-      }`}
-    >
-      {isFollowing ? "팔로잉" : "팔로우"}
-    </button>
-  );
-}
