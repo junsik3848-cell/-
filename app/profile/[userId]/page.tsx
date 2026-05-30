@@ -4,7 +4,7 @@ import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
-import { ArrowLeftIcon } from "@/components/icons";
+import { ArrowLeftIcon, MessageCircleIcon, ShoppingBagIcon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
 
 type UserProfile = {
@@ -19,7 +19,21 @@ type CatchPost = {
   images: string[];
   weight: number | null;
   length: number | null;
+  created_at: string;
 };
+
+type MarketPost = {
+  id: string;
+  images: string[];
+  title: string | null;
+  price: number | null;
+  category: string | null;
+};
+
+const TABS = [
+  { key: "posts", label: "조과 기록" },
+  { key: "market", label: "판매 목록" },
+];
 
 export default function UserProfilePage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = use(params);
@@ -27,6 +41,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [catchPosts, setCatchPosts] = useState<CatchPost[]>([]);
+  const [marketPosts, setMarketPosts] = useState<MarketPost[]>([]);
+  const [tab, setTab] = useState("posts");
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -42,12 +58,14 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
         { data: { user } },
         { data: profileData },
         { data: catchData },
+        { data: marketData },
         { count: followers },
         { count: following },
       ] = await Promise.all([
         supabase.auth.getUser(),
         supabase.from("users").select("id, username, full_name, avatar_url").eq("id", userId).single(),
-        supabase.from("posts").select("id, images, weight, length").eq("user_id", userId).eq("type", "catch").order("created_at", { ascending: false }),
+        supabase.from("posts").select("id, images, weight, length, created_at").eq("user_id", userId).eq("type", "catch").order("created_at", { ascending: false }),
+        supabase.from("posts").select("id, images, title, price, category").eq("user_id", userId).eq("type", "market").order("created_at", { ascending: false }),
         supabase.from("follows").select("id", { count: "exact", head: true }).eq("following_id", userId),
         supabase.from("follows").select("id", { count: "exact", head: true }).eq("follower_id", userId),
       ]);
@@ -56,6 +74,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
 
       setProfile(profileData as UserProfile);
       setCatchPosts((catchData ?? []) as CatchPost[]);
+      setMarketPosts((marketData ?? []) as MarketPost[]);
       setFollowerCount(followers ?? 0);
       setFollowingCount(following ?? 0);
 
@@ -106,9 +125,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
   const avatarSrc = profile.avatar_url ?? `https://picsum.photos/seed/${profile.username}/120/120`;
   const isMyProfile = myUserId === userId;
 
-  const maxWeight = catchPosts.length > 0 ? Math.max(...catchPosts.map((p) => p.weight ?? 0)) : null;
-  const avgLength = catchPosts.filter((p) => p.length).length > 0
-    ? catchPosts.reduce((s, p) => s + (p.length ?? 0), 0) / catchPosts.filter((p) => p.length).length
+  const maxLength = catchPosts.filter((p) => p.length).length > 0
+    ? Math.max(...catchPosts.map((p) => p.length ?? 0))
     : null;
 
   return (
@@ -136,32 +154,28 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
               className="w-20 h-20 rounded-full object-cover ring-2 ring-surface-tint/60"
             />
             <div className="flex-1">
-              <h2 className="text-lg font-bold text-on-surface">{profile.username}</h2>
-              {profile.full_name && (
-                <p className="text-xs text-on-surface-variant mt-0.5">{profile.full_name}</p>
-              )}
-              <div className="flex gap-5 mt-2">
-                <div className="text-center">
-                  <p className="text-base font-bold text-on-surface">{catchPosts.length}</p>
-                  <p className="text-xs text-on-surface-variant">조과</p>
+              <h2 className="text-lg font-bold text-on-surface text-center">{profile.username}</h2>
+              <div className="flex mt-3">
+                <div className="flex-1 text-center">
+                  <p className="text-xl font-bold text-on-surface">{catchPosts.length}</p>
+                  <p className="text-xs text-on-surface-variant mt-0.5">조과</p>
                 </div>
-                <div className="text-center">
-                  <p className="text-base font-bold text-on-surface">{followerCount}</p>
-                  <p className="text-xs text-on-surface-variant">팔로워</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-base font-bold text-on-surface">{followingCount}</p>
-                  <p className="text-xs text-on-surface-variant">팔로잉</p>
-                </div>
+                <Link href={`/profile/${userId}/followers`} className="flex-1 text-center border-x border-outline-variant/40">
+                  <p className="text-xl font-bold text-on-surface">{followerCount}</p>
+                  <p className="text-xs text-on-surface-variant mt-0.5">팔로워</p>
+                </Link>
+                <Link href={`/profile/${userId}/following`} className="flex-1 text-center">
+                  <p className="text-xl font-bold text-on-surface">{followingCount}</p>
+                  <p className="text-xs text-on-surface-variant mt-0.5">팔로잉</p>
+                </Link>
               </div>
             </div>
           </div>
 
           {/* 통계 */}
-          <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2">
             {[
-              { label: "최대 어획", value: maxWeight ? `${maxWeight}kg` : "-" },
-              { label: "평균 사이즈", value: avgLength ? `${avgLength.toFixed(1)}cm` : "-" },
+              { label: "최대 사이즈", value: maxLength ? `${maxLength}cm` : "-" },
               { label: "총 조과", value: `${catchPosts.length}마리` },
             ].map((stat) => (
               <div key={stat.label} className="bg-surface-container rounded-lg px-3 py-3 text-center border border-outline-variant/50">
@@ -171,19 +185,25 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
             ))}
           </div>
 
-          {/* 팔로우 버튼 */}
+          {/* 팔로우 + 메시지 버튼 */}
           {!isMyProfile && (
-            <button
-              onClick={toggleFollow}
-              disabled={isFollowLoading}
-              className={`mt-4 w-full h-11 rounded-xl text-sm font-bold transition-all disabled:opacity-50 ${
-                isFollowing
-                  ? "border border-outline-variant text-on-surface-variant hover:border-error hover:text-error"
-                  : "bg-surface-tint text-on-primary glow-mint hover:bg-primary-fixed"
-              }`}
-            >
-              {isFollowLoading ? "..." : isFollowing ? "팔로잉" : "팔로우"}
-            </button>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={toggleFollow}
+                disabled={isFollowLoading}
+                className={`flex-1 h-11 rounded-xl text-sm font-bold transition-all disabled:opacity-50 ${
+                  isFollowing
+                    ? "border border-outline-variant text-on-surface-variant hover:border-error hover:text-error"
+                    : "bg-surface-tint text-on-primary glow-mint hover:bg-primary-fixed"
+                }`}
+              >
+                {isFollowLoading ? "..." : isFollowing ? "팔로잉" : "팔로우"}
+              </button>
+              <button className="flex items-center justify-center gap-1.5 px-5 h-11 rounded-xl border border-on-surface/40 text-on-surface hover:bg-surface-container transition-colors text-sm font-bold">
+                <MessageCircleIcon size={16} />
+                메시지
+              </button>
+            </div>
           )}
           {isMyProfile && (
             <Link
@@ -195,9 +215,25 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
           )}
         </div>
 
-        {/* 조과 그리드 */}
-        <div className="border-t border-outline-variant/30">
-          {catchPosts.length === 0 ? (
+        {/* 탭 */}
+        <div className="flex border-b border-outline-variant/30">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${
+                tab === t.key ? "text-surface-tint" : "text-on-surface-variant"
+              }`}
+            >
+              {t.label}
+              {tab === t.key && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-surface-tint" />}
+            </button>
+          ))}
+        </div>
+
+        {/* 탭 콘텐츠 */}
+        {tab === "posts" ? (
+          catchPosts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
               <p className="text-4xl mb-3">🎣</p>
               <p className="text-sm">아직 조과 기록이 없어요</p>
@@ -212,16 +248,51 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />
-                  {p.weight && (
-                    <span className="absolute bottom-1 left-1 text-[10px] font-bold text-white bg-black/50 rounded px-1">
-                      {p.weight}kg
-                    </span>
+                  <span className="absolute top-1 right-1 text-[10px] font-medium text-white bg-black/50 rounded px-1">
+                    {new Date(p.created_at).toLocaleDateString("ko-KR", { year: "2-digit", month: "numeric", day: "numeric" }).replace(/\.$/, "")}
+                  </span>
+                  {(p.weight || p.length) && (
+                    <div className="absolute bottom-1 left-1 flex gap-1">
+                      {p.weight && (
+                        <span className="text-[10px] font-bold text-white bg-black/50 rounded px-1">{p.weight}kg</span>
+                      )}
+                      {p.length && (
+                        <span className="text-[10px] font-bold text-white bg-black/50 rounded px-1">{p.length}cm</span>
+                      )}
+                    </div>
                   )}
                 </Link>
               ))}
             </div>
-          )}
-        </div>
+          )
+        ) : (
+          marketPosts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-on-surface-variant">
+              <ShoppingBagIcon size={28} className="mb-2 text-outline" />
+              <p className="text-xs">등록된 판매 글이 없어요</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-outline-variant/30">
+              {marketPosts.map((p) => (
+                <Link key={p.id} href={`/market/${p.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container transition-colors">
+                  <img
+                    src={p.images[0] ?? "https://picsum.photos/seed/empty/80/80"}
+                    alt=""
+                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                    loading="lazy"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-on-surface truncate">{p.title ?? "제목 없음"}</p>
+                    <p className="text-xs text-on-surface-variant mt-0.5">{p.category}</p>
+                    <p className="text-sm font-bold text-surface-tint mt-1">
+                      {p.price != null ? `${p.price.toLocaleString()}원` : "가격 미정"}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )
+        )}
       </main>
 
       <BottomNav />

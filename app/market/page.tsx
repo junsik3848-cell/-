@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import { SearchIcon } from "@/components/icons";
-import { MOCK_MARKET_POSTS, CATEGORY_LABELS, STATUS_LABELS } from "@/lib/mock-data";
+import { MOCK_MARKET_POSTS } from "@/lib/mock-data";
 
 const CATEGORIES = [
   { key: "all", label: "전체" },
@@ -14,11 +14,6 @@ const CATEGORIES = [
   { key: "etc", label: "기타" },
 ];
 
-const STATUS_STYLES: Record<string, string> = {
-  selling: "bg-surface-tint/20 text-surface-tint",
-  reserved: "bg-yellow-500/20 text-yellow-400",
-  sold: "bg-surface-container-high text-outline line-through",
-};
 
 export default function MarketPage() {
   const [category, setCategory] = useState("all");
@@ -35,7 +30,10 @@ export default function MarketPage() {
       {/* 헤더 */}
       <header className="fixed top-0 left-0 right-0 z-40 max-w-md mx-auto bg-surface-container border-b border-outline-variant/30">
         <div className="flex items-center justify-center px-5 h-14 relative">
-          <h1 className="font-brand text-xl font-bold tracking-widest text-surface-tint">LUNKER</h1>
+          <h1
+            className="font-brand text-xl font-bold tracking-widest text-surface-tint cursor-pointer"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >LUNKER</h1>
         </div>
       </header>
 
@@ -70,37 +68,46 @@ export default function MarketPage() {
           </div>
         </div>
 
-        {/* 상품 그리드 */}
-        <div className="px-4 mt-2">
-          <p className="text-xs text-on-surface-variant mb-3">{filtered.length}개의 상품</p>
-          <div className="grid grid-cols-2 gap-3">
+        {/* 상품 리스트 */}
+        <div className="mt-2">
+          <p className="text-xs text-on-surface-variant px-4 mb-1">{filtered.length}개의 상품</p>
+          <div className="divide-y divide-outline-variant/30">
             {filtered.map((item) => (
               <Link
                 key={item.id}
                 href={`/market/${item.id}`}
-                className="block bg-surface-container rounded-lg overflow-hidden border border-outline-variant/50 hover:border-outline transition-all active:scale-95"
+                className="flex items-start gap-4 px-4 py-5 active:bg-surface-container transition-colors"
               >
-                <div className="relative aspect-square">
+                {/* 왼쪽 썸네일 */}
+                <div className="relative flex-shrink-0">
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-full h-full object-cover"
+                    className="w-[110px] h-[110px] rounded-xl object-cover"
                   />
-                  <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold ${STATUS_STYLES[item.status]}`}>
-                    {STATUS_LABELS[item.status]}
-                  </div>
+                  {item.status === "sold" && (
+                    <div className="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center">
+                      <span className="text-[10px] font-bold text-white">거래완료</span>
+                    </div>
+                  )}
                 </div>
-                <div className="p-3">
-                  <p className="text-sm font-medium text-on-surface line-clamp-2 leading-snug">{item.title}</p>
-                  <p className="text-sm font-bold text-surface-tint mt-1.5">
+
+                {/* 오른쪽 내용 */}
+                <div className="flex-1 min-w-0">
+                  <p className={`text-base font-semibold leading-snug line-clamp-2 ${item.status === "sold" ? "text-outline" : "text-on-surface"}`}>
+                    {item.title}
+                  </p>
+                  <div className="flex items-center gap-1 mt-2 flex-wrap">
+                    <span className="text-sm text-outline">{item.location}</span>
+                    <span className="text-sm text-outline">·</span>
+                    <span className="text-sm text-outline">{item.createdAt}</span>
+                    {item.status === "reserved" && (
+                      <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-1.5 py-0.5 rounded-full">예약중</span>
+                    )}
+                  </div>
+                  <p className={`text-lg font-bold mt-2 ${item.status === "sold" ? "text-outline line-through" : "text-on-surface"}`}>
                     {item.price.toLocaleString()}원
                   </p>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-[10px] text-outline">{item.location}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant">
-                      {CATEGORY_LABELS[item.category]}
-                    </span>
-                  </div>
                 </div>
               </Link>
             ))}

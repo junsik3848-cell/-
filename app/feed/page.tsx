@@ -154,7 +154,10 @@ export default function FeedPage() {
     <div className="min-h-screen bg-background max-w-md mx-auto">
       <header className="fixed top-0 left-0 right-0 z-40 max-w-md mx-auto bg-background border-b border-outline-variant/30">
         <div className="flex items-center justify-between px-5 h-14">
-          <h1 className="font-brand text-xl font-bold tracking-widest text-surface-tint">LUNKER</h1>
+          <h1
+            className="font-brand text-xl font-bold tracking-widest text-surface-tint cursor-pointer"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >LUNKER</h1>
           <button className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors">
             <BellIcon size={22} />
           </button>
@@ -251,9 +254,11 @@ function PostCard({
 
       {/* 캡션 (이미지 위, 2줄 제한) */}
       {post.caption && (
-        <p className="px-3 pb-2 text-sm text-on-surface leading-relaxed line-clamp-2">
-          {post.caption}
-        </p>
+        <div className="px-3 pb-2">
+          <p className="text-sm text-on-surface leading-relaxed caption-clamp-2">
+            {post.caption}
+          </p>
+        </div>
       )}
 
       {/* 이미지 */}

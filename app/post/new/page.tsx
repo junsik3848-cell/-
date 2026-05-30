@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
 import { XIcon, CameraIcon, ImageIcon, TagIcon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
 import { compressImage } from "@/lib/compress-image";
@@ -39,6 +40,15 @@ export default function NewPostPage() {
   const [postType, setPostType] = useState<PostType>(null);
   const [showTypeSheet, setShowTypeSheet] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get("type") as PostType;
+    if (type === "catch" || type === "market") {
+      setPostType(type);
+      setShowTypeSheet(false);
+    }
+  }, []);
 
   const catchFileInputRef = useRef<HTMLInputElement>(null);
   const marketFileInputRef = useRef<HTMLInputElement>(null);

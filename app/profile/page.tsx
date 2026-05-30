@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
-import { SettingsIcon, LogOutIcon } from "@/components/icons";
+import { SettingsIcon, LogOutIcon, ShoppingBagIcon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
 import { compressImage } from "@/lib/compress-image";
 
@@ -106,11 +106,8 @@ export default function ProfilePage() {
     router.push("/login");
   }
 
-  const maxWeight = catchPosts.length > 0
-    ? Math.max(...catchPosts.map((p) => p.weight ?? 0))
-    : null;
-  const avgLength = catchPosts.length > 0
-    ? (catchPosts.reduce((s, p) => s + (p.length ?? 0), 0) / catchPosts.filter((p) => p.length).length) || 0
+  const maxLength = catchPosts.filter((p) => p.length).length > 0
+    ? Math.max(...catchPosts.map((p) => p.length ?? 0))
     : null;
 
   const avatarSrc = profile?.avatar_url ?? `https://picsum.photos/seed/${profile?.username ?? "user"}/120/120`;
@@ -178,32 +175,28 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex-1">
-                  <h2 className="text-lg font-bold text-on-surface">{displayName}</h2>
-                  {profile?.full_name && (
-                    <p className="text-xs text-on-surface-variant mt-0.5">{profile.full_name}</p>
-                  )}
-                  <div className="flex gap-5 mt-2">
-                    <div className="text-center">
-                      <p className="text-base font-bold text-on-surface">{catchPosts.length}</p>
-                      <p className="text-xs text-on-surface-variant">조과</p>
+                  <h2 className="text-lg font-bold text-on-surface text-center">{displayName}</h2>
+                  <div className="flex mt-3">
+                    <div className="flex-1 text-center">
+                      <p className="text-xl font-bold text-on-surface">{catchPosts.length}</p>
+                      <p className="text-xs text-on-surface-variant mt-0.5">조과</p>
                     </div>
-                    <div className="text-center">
-                      <p className="text-base font-bold text-on-surface">{followerCount}</p>
-                      <p className="text-xs text-on-surface-variant">팔로워</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-base font-bold text-on-surface">{followingCount}</p>
-                      <p className="text-xs text-on-surface-variant">팔로잉</p>
-                    </div>
+                    <Link href={`/profile/${profile?.id}/followers`} className="flex-1 text-center border-x border-outline-variant/40">
+                      <p className="text-xl font-bold text-on-surface">{followerCount}</p>
+                      <p className="text-xs text-on-surface-variant mt-0.5">팔로워</p>
+                    </Link>
+                    <Link href={`/profile/${profile?.id}/following`} className="flex-1 text-center">
+                      <p className="text-xl font-bold text-on-surface">{followingCount}</p>
+                      <p className="text-xs text-on-surface-variant mt-0.5">팔로잉</p>
+                    </Link>
                   </div>
                 </div>
               </div>
 
               {/* 통계 카드 */}
-              <div className="mt-4 grid grid-cols-3 gap-2">
+              <div className="mt-4 grid grid-cols-2 gap-2">
                 {[
-                  { label: "최대 어획", value: maxWeight ? `${maxWeight}kg` : "-" },
-                  { label: "평균 사이즈", value: avgLength ? `${avgLength.toFixed(1)}cm` : "-" },
+                  { label: "최대 사이즈", value: maxLength ? `${maxLength}cm` : "-" },
                   { label: "총 조과", value: `${catchPosts.length}마리` },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-surface-container rounded-lg px-3 py-3 text-center border border-outline-variant/50">
@@ -238,7 +231,7 @@ export default function ProfilePage() {
                 <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
                   <p className="text-4xl mb-3">🎣</p>
                   <p className="text-sm">아직 조과 기록이 없어요</p>
-                  <Link href="/post/new" className="inline-block mt-4 text-xs text-surface-tint hover:underline">
+                  <Link href="/post/new?type=catch" className="inline-block mt-4 text-xs text-surface-tint hover:underline">
                     첫 조과 기록하기
                   </Link>
                 </div>
@@ -252,10 +245,18 @@ export default function ProfilePage() {
                         className="w-full h-full object-cover"
                         loading="lazy"
                       />
-                      {p.weight && (
-                        <span className="absolute bottom-1 left-1 text-[10px] font-bold text-white bg-black/50 rounded px-1">
-                          {p.weight}kg
-                        </span>
+                      <span className="absolute top-1 right-1 text-[10px] font-medium text-white bg-black/50 rounded px-1">
+                        {new Date(p.created_at).toLocaleDateString("ko-KR", { year: "2-digit", month: "numeric", day: "numeric" }).replace(/\.$/, "")}
+                      </span>
+                      {(p.weight || p.length) && (
+                        <div className="absolute bottom-1 left-1 flex gap-1">
+                          {p.weight && (
+                            <span className="text-[10px] font-bold text-white bg-black/50 rounded px-1">{p.weight}kg</span>
+                          )}
+                          {p.length && (
+                            <span className="text-[10px] font-bold text-white bg-black/50 rounded px-1">{p.length}cm</span>
+                          )}
+                        </div>
                       )}
                     </Link>
                   ))}
@@ -263,10 +264,10 @@ export default function ProfilePage() {
               )
             ) : (
               marketPosts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
-                  <p className="text-4xl mb-3">🛒</p>
-                  <p className="text-sm">등록된 판매 글이 없어요</p>
-                  <Link href="/post/new" className="inline-block mt-4 text-xs text-surface-tint hover:underline">
+                <div className="flex flex-col items-center justify-center py-10 text-on-surface-variant">
+                  <ShoppingBagIcon size={28} className="mb-2 text-outline" />
+                  <p className="text-xs">등록된 판매 글이 없어요</p>
+                  <Link href="/post/new?type=market" className="inline-block mt-3 text-xs text-surface-tint hover:underline">
                     장터 글 작성하기
                   </Link>
                 </div>
