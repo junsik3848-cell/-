@@ -19,7 +19,7 @@ const YEARS = [
   { key: "2021", label: "2021년", sub: "2021년 12월" },
   { key: "2019", label: "2019년", sub: "2019년 12월" },
   { key: "2017", label: "2017년", sub: "2017년 11월" },
-  { key: "2015", label: "2015년 🔥", sub: "극심한 가뭄 — 저수지 바닥 노출" },
+  { key: "2015", label: "2015년 ", sub: "2017년 11월" },
 ];
 
 const ADMIN_EMAIL = "junsik3848@gmail.com";
@@ -130,7 +130,7 @@ export default function MapPage() {
           <NaverMap
             onSpotClick={editMode ? undefined : setSelectedSpot}
             editMode={editMode}
-            onSpotsChanged={() => {}}
+            onSpotsChanged={() => { }}
             mapType={mapType}
             favorites={favorites}
             centerTo={centerTo}
@@ -185,9 +185,8 @@ export default function MapPage() {
 
         {/* 즐겨찾기 바텀시트 백드롭 */}
         <div
-          className={`absolute inset-0 z-[830] bg-black/50 transition-opacity duration-300 ${
-            favoritesOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          }`}
+          className={`absolute inset-0 z-[830] bg-black/50 transition-opacity duration-300 ${favoritesOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+            }`}
           onClick={() => setFavoritesOpen(false)}
         />
 
@@ -248,9 +247,8 @@ export default function MapPage() {
 
         {/* 설정 패널 백드롭 */}
         <div
-          className={`absolute inset-0 z-[900] bg-black/50 transition-opacity duration-300 ${
-            panelOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          }`}
+          className={`absolute inset-0 z-[900] bg-black/50 transition-opacity duration-300 ${panelOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+            }`}
           onClick={() => setPanelOpen(false)}
         />
 
@@ -281,11 +279,10 @@ export default function MapPage() {
               {/* 출조 지도 */}
               <button
                 onClick={() => setMapMode("naver")}
-                className={`w-full text-left px-4 py-3.5 rounded-xl transition-all flex items-center gap-3 ${
-                  mapMode === "naver"
+                className={`w-full text-left px-4 py-3.5 rounded-xl transition-all flex items-center gap-3 ${mapMode === "naver"
                     ? "bg-surface-tint text-on-primary"
                     : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40 hover:text-on-surface"
-                }`}
+                  }`}
               >
                 <span className="text-xl">🗺️</span>
                 <div>
@@ -309,11 +306,10 @@ export default function MapPage() {
                       <button
                         key={type}
                         onClick={() => setMapType(type)}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                          active
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${active
                             ? "bg-surface-tint text-on-primary"
                             : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40"
-                        }`}
+                          }`}
                       >
                         {labels[type]}
                       </button>
@@ -325,11 +321,10 @@ export default function MapPage() {
               {/* 연도별 위성사진 */}
               <button
                 onClick={() => setMapMode("wayback")}
-                className={`w-full text-left px-4 py-3.5 rounded-xl transition-all flex items-center gap-3 ${
-                  mapMode === "wayback"
+                className={`w-full text-left px-4 py-3.5 rounded-xl transition-all flex items-center gap-3 ${mapMode === "wayback"
                     ? "bg-surface-tint text-on-primary"
                     : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40 hover:text-on-surface"
-                }`}
+                  }`}
               >
                 <span className="text-xl">🛰️</span>
                 <div>
@@ -344,9 +339,8 @@ export default function MapPage() {
 
           {/* 연도 선택 — Wayback 선택 시만 표시 */}
           <div
-            className={`transition-all duration-300 overflow-hidden ${
-              mapMode === "wayback" ? "opacity-100 max-h-96 mt-4" : "opacity-0 max-h-0"
-            }`}
+            className={`transition-all duration-300 overflow-hidden ${mapMode === "wayback" ? "opacity-100 max-h-96 mt-4" : "opacity-0 max-h-0"
+              }`}
           >
             <div className="px-4 pt-1 pb-4 border-t border-outline-variant/20">
               <p className="text-[10px] font-bold text-surface-tint uppercase tracking-widest mb-3 pt-4">
@@ -357,11 +351,10 @@ export default function MapPage() {
                   <button
                     key={y.key}
                     onClick={() => setYear(y.key)}
-                    className={`w-full text-left px-4 py-2.5 rounded-xl text-sm transition-all flex items-center justify-between ${
-                      year === y.key
+                    className={`w-full text-left px-4 py-2.5 rounded-xl text-sm transition-all flex items-center justify-between ${year === y.key
                         ? "bg-surface-container-highest border border-surface-tint/60 text-on-surface font-bold"
                         : "text-on-surface-variant hover:text-on-surface"
-                    }`}
+                      }`}
                   >
                     <span>{y.label}</span>
                     {year === y.key && <span className="text-surface-tint text-xs">✓</span>}
@@ -384,11 +377,10 @@ export default function MapPage() {
           {/* 검색 버튼 */}
           <button
             onClick={() => { setSearchOpen(true); setPanelOpen(false); setFavoritesOpen(false); }}
-            className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${
-              searchOpen
+            className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${searchOpen
                 ? "bg-surface-tint text-on-primary"
                 : "bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant/40"
-            }`}
+              }`}
           >
             <SearchIcon size={19} />
           </button>
@@ -396,11 +388,10 @@ export default function MapPage() {
           {/* 레이어 버튼 */}
           <button
             onClick={() => { setPanelOpen((v) => !v); setFavoritesOpen(false); }}
-            className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${
-              panelOpen
+            className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${panelOpen
                 ? "bg-surface-tint text-on-primary"
                 : "bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant/40"
-            }`}
+              }`}
           >
             <LayersIcon size={20} />
           </button>
@@ -409,11 +400,10 @@ export default function MapPage() {
           {user && (
             <button
               onClick={() => { setFavoritesOpen((v) => !v); setPanelOpen(false); }}
-              className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${
-                favoritesOpen
+              className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${favoritesOpen
                   ? "bg-surface-tint text-on-primary"
                   : "bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant/40"
-              }`}
+                }`}
             >
               <StarIcon
                 size={19}
@@ -427,11 +417,10 @@ export default function MapPage() {
           {isAdmin && mapMode === "naver" && (
             <button
               onClick={() => setEditMode((v) => !v)}
-              className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg text-xs font-bold transition-all ${
-                editMode
+              className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg text-xs font-bold transition-all ${editMode
                   ? "bg-red-500 text-white"
                   : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40"
-              }`}
+                }`}
               title={editMode ? "편집 종료" : "핀 편집"}
             >
               {editMode ? "완료" : "✏️"}

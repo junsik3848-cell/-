@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import ImageCarousel from "@/components/ImageCarousel";
-import { BellIcon, HeartIcon, MessageCircleIcon, BookmarkIcon } from "@/components/icons";
+import { HeartIcon, MessageCircleIcon, BookmarkIcon } from "@/components/icons";
 import FollowButton from "@/components/FollowButton";
 import { createClient } from "@/lib/supabase/client";
 
@@ -158,9 +158,9 @@ export default function FeedPage() {
             className="font-brand text-xl font-bold tracking-widest text-surface-tint cursor-pointer"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >LUNKER</h1>
-          <button className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors">
-            <BellIcon size={22} />
-          </button>
+          <Link href="/messages" className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors">
+            <MessageCircleIcon size={22} />
+          </Link>
         </div>
       </header>
 

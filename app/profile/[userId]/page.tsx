@@ -49,6 +49,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [isMessaging, setIsMessaging] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -95,6 +96,29 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
     }
     load();
   }, [userId, router]);
+
+  async function handleMessage() {
+    if (!myUserId) { router.push("/login"); return; }
+    setIsMessaging(true);
+    const supabase = createClient();
+    const [u1, u2] = [myUserId, userId].sort();
+    const { data: existing } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("user1_id", u1)
+      .eq("user2_id", u2)
+      .maybeSingle();
+    let convId = existing?.id;
+    if (!convId) {
+      const { data } = await supabase
+        .from("conversations")
+        .insert({ user1_id: u1, user2_id: u2 })
+        .select("id")
+        .single();
+      convId = data!.id;
+    }
+    router.push(`/messages/${convId}`);
+  }
 
   async function toggleFollow() {
     if (!myUserId) { router.push("/login"); return; }
@@ -199,9 +223,13 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
               >
                 {isFollowLoading ? "..." : isFollowing ? "팔로잉" : "팔로우"}
               </button>
-              <button className="flex items-center justify-center gap-1.5 px-5 h-11 rounded-xl border border-on-surface/40 text-on-surface hover:bg-surface-container transition-colors text-sm font-bold">
+              <button
+                onClick={handleMessage}
+                disabled={isMessaging}
+                className="flex items-center justify-center gap-1.5 px-5 h-11 rounded-xl border border-on-surface/40 text-on-surface hover:bg-surface-container transition-colors text-sm font-bold disabled:opacity-50"
+              >
                 <MessageCircleIcon size={16} />
-                메시지
+                {isMessaging ? "..." : "메시지"}
               </button>
             </div>
           )}

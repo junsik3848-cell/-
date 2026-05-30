@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { CameraIcon } from "@/components/icons";
+import { CameraIcon, ArrowLeftIcon } from "@/components/icons";
 import { compressImage } from "@/lib/compress-image";
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_가-힣]{2,20}$/;
@@ -197,13 +197,23 @@ export default function OnboardingPage() {
               >
                 {isLoading ? "저장 중..." : "완료"}
               </button>
-              <button
-                onClick={() => handleAvatarSubmit(true)}
-                disabled={isLoading}
-                className="w-full h-12 text-on-surface-variant text-sm font-medium hover:text-on-surface transition-colors"
-              >
-                넘어가기
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setStep(1)}
+                  disabled={isLoading}
+                  className="flex-1 h-12 flex items-center justify-center gap-1.5 text-on-surface-variant text-sm font-medium hover:text-on-surface transition-colors"
+                >
+                  <ArrowLeftIcon size={15} />
+                  뒤로가기
+                </button>
+                <button
+                  onClick={() => handleAvatarSubmit(true)}
+                  disabled={isLoading}
+                  className="flex-1 h-12 text-on-surface-variant text-sm font-medium hover:text-on-surface transition-colors"
+                >
+                  넘어가기
+                </button>
+              </div>
             </div>
           </>
         )}
