@@ -33,6 +33,7 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
   const [isLoading, setIsLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const convUsersRef = useRef<{ user1_id: string; user2_id: string } | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -56,6 +57,7 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
 
       if (!conv) { router.push("/messages"); return; }
 
+      convUsersRef.current = { user1_id: conv.user1_id, user2_id: conv.user2_id };
       const otherId = conv.user1_id === user.id ? conv.user2_id : conv.user1_id;
       const { data: otherData } = await supabase
         .from("users")
@@ -121,9 +123,18 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
       .select("id, sender_id, content, is_read, created_at")
       .single();
 
+    const cu = convUsersRef.current;
+    const otherDeletedField = cu
+      ? (cu.user1_id === myUserId ? "deleted_by_user2" : "deleted_by_user1")
+      : null;
+
     await supabase
       .from("conversations")
-      .update({ last_message: content, last_message_at: new Date().toISOString() })
+      .update({
+        last_message: content,
+        last_message_at: new Date().toISOString(),
+        ...(otherDeletedField ? { [otherDeletedField]: false } : {}),
+      })
       .eq("id", conversationId);
 
     if (msg) {
