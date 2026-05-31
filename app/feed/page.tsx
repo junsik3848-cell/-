@@ -34,6 +34,7 @@ export default function FeedPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [hasUnread, setHasUnread] = useState(false);
   const offsetRef = useRef(0);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const myUserIdRef = useRef<string | null>(null);
@@ -88,11 +89,57 @@ export default function FeedPage() {
       const { data: { user } } = await supabase.auth.getUser();
       myUserIdRef.current = user?.id ?? null;
       setMyUserId(user?.id ?? null);
+
+      if (user?.id) {
+        const { count } = await supabase
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("is_read", false)
+          .eq("is_system", false)
+          .neq("sender_id", user.id);
+        setHasUnread((count ?? 0) > 0);
+      }
+
       await loadPosts(0);
       setIsLoading(false);
     }
     init();
   }, [loadPosts]);
+
+  // 실시간 안읽은 메시지 감지
+  useEffect(() => {
+    if (!myUserId) return;
+    const supabase = createClient();
+
+    const channel = supabase
+      .channel("feed-unread")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => {
+          const msg = payload.new as { sender_id: string; is_system: boolean };
+          if (msg.sender_id !== myUserId && !msg.is_system) {
+            setHasUnread(true);
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "messages" },
+        async () => {
+          const { count } = await supabase
+            .from("messages")
+            .select("*", { count: "exact", head: true })
+            .eq("is_read", false)
+            .eq("is_system", false)
+            .neq("sender_id", myUserId);
+          setHasUnread((count ?? 0) > 0);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [myUserId]);
 
   // 무한 스크롤 — sentinel이 뷰포트에 들어오면 다음 페이지 로드
   useEffect(() => {
@@ -158,8 +205,11 @@ export default function FeedPage() {
             className="font-brand text-xl font-bold tracking-widest text-surface-tint cursor-pointer"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >LUNKER</h1>
-          <Link href="/messages" className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors">
+          <Link href="/messages" className="relative w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors">
             <MessageCircleIcon size={22} />
+            {hasUnread && (
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
+            )}
           </Link>
         </div>
       </header>
