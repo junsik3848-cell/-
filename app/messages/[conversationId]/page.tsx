@@ -11,6 +11,7 @@ type Message = {
   sender_id: string;
   content: string;
   is_read: boolean;
+  is_system: boolean;
   created_at: string;
 };
 
@@ -48,7 +49,7 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
           .single(),
         supabase
           .from("messages")
-          .select("id, sender_id, content, is_read, created_at")
+          .select("id, sender_id, content, is_read, is_system, created_at")
           .eq("conversation_id", conversationId)
           .order("created_at", { ascending: true }),
       ]);
@@ -134,9 +135,9 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
   const avatar = other?.avatar_url ?? `https://picsum.photos/seed/${other?.username ?? "user"}/80/80`;
 
   return (
-    <div className="min-h-screen bg-background max-w-md mx-auto flex flex-col">
+    <div className="fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md flex flex-col bg-background">
       {/* 헤더 */}
-      <header className="fixed top-0 left-0 right-0 z-40 max-w-md mx-auto bg-surface-container border-b border-outline-variant/30">
+      <header className="flex-shrink-0 bg-surface-container border-b border-outline-variant/30">
         <div className="flex items-center gap-3 px-3 h-14">
           <button
             onClick={() => router.push("/messages")}
@@ -154,7 +155,7 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
       </header>
 
       {/* 메시지 목록 */}
-      <main className="flex-1 pt-14 pb-20 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="flex items-center justify-center pt-32">
             <div className="w-8 h-8 border-2 border-surface-tint border-t-transparent rounded-full animate-spin" />
@@ -168,6 +169,16 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
         ) : (
           <div className="px-4 py-4 space-y-2">
             {messages.map((msg, i) => {
+              if (msg.is_system) {
+                return (
+                  <div key={msg.id} className="flex items-center justify-center py-1">
+                    <span className="text-xs text-outline bg-surface-container px-3 py-1 rounded-full">
+                      {msg.content}
+                    </span>
+                  </div>
+                );
+              }
+
               const isMe = msg.sender_id === myUserId;
               const showTime =
                 i === messages.length - 1 ||
@@ -211,7 +222,7 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
       </main>
 
       {/* 입력창 */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 max-w-md mx-auto bg-surface-container border-t border-outline-variant/30 px-3 py-3">
+      <div className="flex-shrink-0 bg-surface-container border-t border-outline-variant/30 px-3 py-3">
         <div className="flex items-center gap-2">
           <input
             ref={inputRef}
