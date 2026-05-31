@@ -13,6 +13,8 @@ type Conversation = {
   user2_id: string;
   last_message: string | null;
   last_message_at: string;
+  deleted_by_user1: boolean;
+  deleted_by_user2: boolean;
   other: { id: string; username: string; avatar_url: string | null };
 };
 
@@ -40,7 +42,7 @@ export default function MessagesPage() {
 
       const { data } = await supabase
         .from("conversations")
-        .select("id, user1_id, user2_id, last_message, last_message_at")
+        .select("id, user1_id, user2_id, last_message, last_message_at, deleted_by_user1, deleted_by_user2")
         .or(`and(user1_id.eq.${user.id},deleted_by_user1.eq.false),and(user2_id.eq.${user.id},deleted_by_user2.eq.false)`)
         .order("last_message_at", { ascending: false });
 
@@ -78,23 +80,31 @@ export default function MessagesPage() {
     if (!conv) return;
 
     const isUser1 = conv.user1_id === myUserId;
+    const otherAlreadyLeft = isUser1 ? conv.deleted_by_user2 : conv.deleted_by_user1;
     const leaveMsg = `${myUsername}님이 대화를 나갔습니다.`;
 
-    await supabase.from("messages").insert({
-      conversation_id: convId,
-      sender_id: myUserId,
-      content: leaveMsg,
-      is_system: true,
-    });
+    if (otherAlreadyLeft) {
+      // 양쪽 모두 나간 상태 → 메시지 전부 삭제 후 대화 삭제
+      await supabase.from("messages").delete().eq("conversation_id", convId);
+      await supabase.from("conversations").delete().eq("id", convId);
+    } else {
+      // 아직 상대방이 남아 있음 → 시스템 메시지 삽입 + 소프트 삭제
+      await supabase.from("messages").insert({
+        conversation_id: convId,
+        sender_id: myUserId,
+        content: leaveMsg,
+        is_system: true,
+      });
 
-    await supabase
-      .from("conversations")
-      .update({
-        [isUser1 ? "deleted_by_user1" : "deleted_by_user2"]: true,
-        last_message: leaveMsg,
-        last_message_at: new Date().toISOString(),
-      })
-      .eq("id", convId);
+      await supabase
+        .from("conversations")
+        .update({
+          [isUser1 ? "deleted_by_user1" : "deleted_by_user2"]: true,
+          last_message: leaveMsg,
+          last_message_at: new Date().toISOString(),
+        })
+        .eq("id", convId);
+    }
 
     setConversations((prev) => prev.filter((c) => c.id !== convId));
   }
