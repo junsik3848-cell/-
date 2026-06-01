@@ -32,6 +32,7 @@ interface Props {
   favorites?: FavoriteRow[];
   centerTo?: { lat: number; lng: number } | null;
   onLongPress?: (lat: number, lng: number) => void;
+  onMapClick?: () => void;
 }
 
 export default function NaverMap({
@@ -42,6 +43,7 @@ export default function NaverMap({
   favorites = [],
   centerTo,
   onLongPress,
+  onMapClick,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -54,11 +56,13 @@ export default function NaverMap({
   const onSpotClickRef = useRef(onSpotClick);
   const onSpotsChangedRef = useRef(onSpotsChanged);
   const onLongPressRef = useRef(onLongPress);
+  const onMapClickRef = useRef(onMapClick);
 
   useEffect(() => { editModeRef.current = editMode; }, [editMode]);
   useEffect(() => { onSpotClickRef.current = onSpotClick; }, [onSpotClick]);
   useEffect(() => { onSpotsChangedRef.current = onSpotsChanged; }, [onSpotsChanged]);
   useEffect(() => { onLongPressRef.current = onLongPress; }, [onLongPress]);
+  useEffect(() => { onMapClickRef.current = onMapClick; }, [onMapClick]);
 
   // 지도 타입 변경
   useEffect(() => {
@@ -254,9 +258,12 @@ export default function NaverMap({
         debounceRef.current = setTimeout(loadMarkers, 500);
       });
 
-      // 편집 모드 — 빈 곳 클릭 시 핀 추가
+      // 편집 모드 — 빈 곳 클릭 시 핀 추가 / 일반 모드 — 맵 클릭 콜백
       naver.maps.Event.addListener(mapRef.current, "click", async (e: any) => {
-        if (!editModeRef.current) return;
+        if (!editModeRef.current) {
+          onMapClickRef.current?.();
+          return;
+        }
         const name = prompt("저수지/낚시터 이름을 입력하세요:");
         if (!name?.trim()) return;
         const supabase = createBrowserClient(

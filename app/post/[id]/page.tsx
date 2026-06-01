@@ -15,6 +15,7 @@ type PostDetail = {
   type: string;
   images: string[];
   caption: string | null;
+  hashtags: string | null;
   location: string | null;
   weight: number | null;
   length: number | null;
@@ -276,10 +277,15 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
           </button>
         </div>
 
-        {/* 캡션 */}
-        {post.caption && (
+        {/* 캡션 + 해시태그 */}
+        {(post.caption || post.hashtags) && (
           <div className="px-4 py-3 border-b border-outline-variant/30">
-            <p className="text-sm text-on-surface leading-relaxed">{post.caption}</p>
+            {post.caption && (
+              <p className="text-sm text-on-surface leading-relaxed">{post.caption}</p>
+            )}
+            {post.hashtags && (
+              <p className="text-xs text-surface-tint leading-relaxed mt-1">{post.hashtags}</p>
+            )}
           </div>
         )}
 

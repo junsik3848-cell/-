@@ -314,9 +314,18 @@ export default function NewPostPage() {
               </label>
               <input
                 type="text"
-                placeholder="#배스낚시 #충주호 #LUNKER"
+                placeholder="#배스낚시 #런커.. (띄어쓰기를 하면 '#'이 생겨요)"
                 value={catchForm.hashtags}
-                onChange={(e) => setCatchForm((f) => ({ ...f, hashtags: e.target.value }))}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const parts = raw.split(' ');
+                  const formatted = parts.map((word, i) => {
+                    if (!word || word.startsWith('#')) return word;
+                    if (i < parts.length - 1) return '#' + word;
+                    return word;
+                  }).join(' ');
+                  setCatchForm((f) => ({ ...f, hashtags: formatted }));
+                }}
                 className="w-full h-11 px-3 rounded-lg bg-surface-container border border-outline-variant text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-surface-tint transition-all"
               />
             </div>

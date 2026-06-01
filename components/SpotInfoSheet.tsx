@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { XIcon, StarIcon } from "@/components/icons";
 import { createBrowserClient } from "@supabase/ssr";
 import type { SpotRow } from "@/components/NaverMap";
@@ -31,6 +32,18 @@ function weatherEmoji(code: string): string {
   if ([176, 263, 266, 293, 296, 299, 302, 305, 308].includes(c)) return "🌧️";
   if ([179, 182, 185, 227, 230, 317, 320, 323, 326].includes(c)) return "❄️";
   return "🌤️";
+}
+
+function extractKeywords(name: string): string[] {
+  const suffixes = ['저수지', '호수', '댐', '호', '지', '강', '천', '못'];
+  const keywords = [name];
+  for (const suffix of suffixes) {
+    if (name.endsWith(suffix) && name.length - suffix.length >= 2) {
+      keywords.push(name.slice(0, name.length - suffix.length));
+      break;
+    }
+  }
+  return [...new Set(keywords)];
 }
 
 function mockWaterLevel(name: string): number {
@@ -84,10 +97,15 @@ export default function SpotInfoSheet({ spot, onClose, isFavorited = false, onTo
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
+    const keywords = extractKeywords(spot.name);
+    const orFilter = keywords
+      .flatMap(kw => [`location.ilike.%${kw}%`, `hashtags.ilike.%${kw}%`])
+      .join(',');
     supabase
       .from("posts")
       .select("id, images, caption, weight, length, created_at, users(username, avatar_url)")
-      .ilike("location", `%${spot.name}%`)
+      .eq("type", "catch")
+      .or(orFilter)
       .order("created_at", { ascending: false })
       .limit(5)
       .then(({ data }) => {
@@ -195,15 +213,21 @@ export default function SpotInfoSheet({ spot, onClose, isFavorited = false, onTo
                   <p className="text-xs text-on-surface-variant/60 mt-1">첫 번째 기록을 남겨보세요!</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {catches.map((post) => (
-                    <div key={post.id} className="flex items-center gap-3">
-                      {post.images?.[0] && (
+                    <Link
+                      key={post.id}
+                      href={`/post/${post.id}`}
+                      className="flex items-center gap-3 bg-surface-container-high rounded-xl px-3 py-3 active:scale-[0.98] transition-all"
+                    >
+                      {post.images?.[0] ? (
                         <img
                           src={post.images[0]}
                           alt=""
                           className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                         />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-surface-container flex-shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-on-surface">{post.users?.username}</p>
@@ -212,12 +236,14 @@ export default function SpotInfoSheet({ spot, onClose, isFavorited = false, onTo
                             {post.weight ? `${post.weight}g` : ""}{post.weight && post.length ? " · " : ""}{post.length ? `${post.length}cm` : ""}
                           </p>
                         )}
-                        <p className="text-[10px] text-on-surface-variant truncate mt-0.5">{post.caption}</p>
+                        {post.caption && (
+                          <p className="text-[10px] text-on-surface-variant truncate mt-0.5">{post.caption}</p>
+                        )}
                       </div>
                       <p className="text-[10px] text-on-surface-variant flex-shrink-0">
                         {new Date(post.created_at).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
                       </p>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}

@@ -16,6 +16,7 @@ type FeedPost = {
   user_id: string;
   images: string[];
   caption: string | null;
+  hashtags: string | null;
   location: string | null;
   weight: number | null;
   length: number | null;
@@ -43,7 +44,7 @@ export default function FeedPage() {
     const supabase = createClient();
     const { data: rawPosts } = await supabase
       .from("posts")
-      .select("id, user_id, images, caption, location, weight, length, likes_count, comments_count, created_at, users(username, avatar_url)")
+      .select("id, user_id, images, caption, hashtags, location, weight, length, likes_count, comments_count, created_at, users(username, avatar_url)")
       .eq("type", "catch")
       .order("created_at", { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
@@ -302,7 +303,7 @@ function PostCard({
         <FollowButton postUserId={post.user_id} myUserId={myUserId} />
       </div>
 
-      {/* 캡션 (이미지 위, 2줄 제한) */}
+      {/* 캡션 */}
       {post.caption && (
         <div className="px-3 pb-2">
           <p className="text-sm text-on-surface leading-relaxed caption-clamp-2">
@@ -362,3 +363,4 @@ function PostCard({
     </article>
   );
 }
+

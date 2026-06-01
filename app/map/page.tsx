@@ -135,6 +135,7 @@ export default function MapPage() {
             favorites={favorites}
             centerTo={centerTo}
             onLongPress={user ? handleLongPress : undefined}
+            onMapClick={() => setSelectedSpot(null)}
           />
         </div>
         <div className={mapMode === "wayback" ? "absolute inset-0" : "hidden"}>
@@ -284,7 +285,6 @@ export default function MapPage() {
                   : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40 hover:text-on-surface"
                   }`}
               >
-                <span className="text-xl">🗺️</span>
                 <div>
                   <p className="font-bold text-sm leading-none">출조 지도</p>
                   <p className={`text-[11px] mt-1 ${mapMode === "naver" ? "text-on-primary/70" : "text-outline"}`}>
@@ -326,7 +326,6 @@ export default function MapPage() {
                   : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40 hover:text-on-surface"
                   }`}
               >
-                <span className="text-xl">🛰️</span>
                 <div>
                   <p className="font-bold text-sm leading-none">연도별 위성사진</p>
                 </div>
