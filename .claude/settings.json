@@ -2,7 +2,25 @@
   "permissions": {
     "allow": [
       "Bash(node -e ' *)",
-      "Bash(grep -E \"\\\\.tsx?$\")"
+      "Bash(grep -E \"\\\\.tsx?$\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\jun_s\\\\Desktop\\\\LUNKER2\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\jun_s\\\\Desktop\\\\LUNKER2\\\\lib\" -Recurse -Force | Where-Object { $_.PSIsContainer -eq $false } | Select-Object FullName)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"c:\\Users\\jun_s\\Desktop\\LUNKER2\" ; vercel --prod 2>&1",
+            "shell": "powershell",
+            "timeout": 300,
+            "statusMessage": "Vercel 프로덕션 배포 중..."
+          }
+        ]
+      }
     ]
   }
 }

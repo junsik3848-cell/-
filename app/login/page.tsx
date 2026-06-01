@@ -3,34 +3,47 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-function isInAppBrowser() {
+function isKakaoTalkBrowser() {
+  if (typeof navigator === "undefined") return false;
+  return /KAKAOTALK/i.test(navigator.userAgent);
+}
+
+function isOtherInAppBrowser() {
   if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent;
-  return /KAKAOTALK|Instagram|FBAN|FBAV|Line\/|Naver|DaumApps|MicroMessenger/i.test(ua);
+  return /Instagram|FBAN|FBAV|Line\/|DaumApps|MicroMessenger/i.test(ua);
 }
 
 function openInChrome(url: string) {
-  // Android: intent scheme으로 Chrome 강제 실행
   const intentUrl = `intent://${url.replace(/^https?:\/\//, "")}#Intent;scheme=https;package=com.android.chrome;end`;
   window.location.href = intentUrl;
 }
 
 export default function LoginPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [inAppBrowser, setInAppBrowser] = useState(false);
+  const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
+  const [isLoadingKakao, setIsLoadingKakao] = useState(false);
+  const [kakaoTalk, setKakaoTalk] = useState(false);
+  const [otherInApp, setOtherInApp] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
-    setInAppBrowser(isInAppBrowser());
+    setKakaoTalk(isKakaoTalkBrowser());
+    setOtherInApp(isOtherInAppBrowser());
   }, []);
 
   async function handleGoogleLogin() {
-    setIsLoading(true);
+    setIsLoadingGoogle(true);
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+  }
+
+  async function handleKakaoLogin() {
+    setIsLoadingKakao(true);
+    await supabase.auth.signInWithOAuth({
+      provider: "kakao",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
   }
 
@@ -53,16 +66,21 @@ export default function LoginPage() {
           <p className="text-on-surface-variant text-sm mt-3">프로 앵글러를 위한 여정의 시작</p>
         </div>
 
-        {inAppBrowser ? (
-          /* 인앱브라우저 안내 */
+        {kakaoTalk ? (
+          /* 카카오톡 인앱브라우저: 카카오 로그인만 표시 */
+          <div className="w-full">
+            <KakaoButton loading={isLoadingKakao} onClick={handleKakaoLogin} />
+          </div>
+        ) : otherInApp ? (
+          /* 기타 인앱브라우저: Chrome으로 열기 안내 */
           <div className="w-full space-y-4">
             <div className="w-full rounded-xl bg-surface-container border border-outline-variant/50 px-5 py-5 text-center space-y-3">
               <p className="text-2xl">⚠️</p>
               <p className="text-sm font-bold text-on-surface">
-                카카오톡 브라우저에서는<br />Google 로그인이 지원되지 않아요
+                인앱 브라우저에서는<br />로그인이 지원되지 않아요
               </p>
               <p className="text-xs text-on-surface-variant leading-relaxed">
-                Google 정책으로 인해 인앱브라우저에서는<br />로그인할 수 없어요.
+                Chrome 또는 Safari에서 접속해 주세요.
               </p>
             </div>
             <button
@@ -71,9 +89,6 @@ export default function LoginPage() {
             >
               Chrome으로 열기
             </button>
-            <p className="text-xs text-outline text-center">
-              또는 주소를 복사해 Chrome / Safari에서 접속해 주세요
-            </p>
             <button
               onClick={() => navigator.clipboard?.writeText(window.location.href)}
               className="w-full h-11 rounded-xl border border-outline-variant text-on-surface-variant text-xs font-medium active:scale-95 transition-all"
@@ -82,15 +97,18 @@ export default function LoginPage() {
             </button>
           </div>
         ) : (
-          /* 일반 브라우저: 구글 로그인 버튼 */
+          /* 일반 브라우저: 카카오 + 구글 */
           <>
-            <button
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-              className="w-full h-14 glass-panel rounded-lg flex items-center justify-center gap-3 text-on-surface text-sm font-semibold hover:bg-surface-container-high active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isLoading ? <LoadingSpinner /> : <><GoogleIcon />Google로 시작하기</>}
-            </button>
+            <div className="w-full space-y-3">
+              <KakaoButton loading={isLoadingKakao} onClick={handleKakaoLogin} />
+              <button
+                onClick={handleGoogleLogin}
+                disabled={isLoadingGoogle}
+                className="w-full h-14 glass-panel rounded-lg flex items-center justify-center gap-3 text-on-surface text-sm font-semibold hover:bg-surface-container-high active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isLoadingGoogle ? <LoadingSpinner color="white" /> : <><GoogleIcon />Google로 시작하기</>}
+              </button>
+            </div>
             <p className="mt-6 text-xs text-outline text-center leading-relaxed">
               계속 진행하면 LUNKER의{" "}
               <span className="text-on-surface-variant">서비스 이용약관</span> 및{" "}
@@ -100,6 +118,30 @@ export default function LoginPage() {
         )}
       </div>
     </main>
+  );
+}
+
+function KakaoButton({ loading, onClick }: { loading: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={loading}
+      className="w-full h-14 rounded-lg flex items-center justify-center gap-3 text-[#191919] text-sm font-semibold active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+      style={{ backgroundColor: "#FEE500" }}
+    >
+      {loading ? <LoadingSpinner color="dark" /> : <><KakaoIcon />카카오로 시작하기</>}
+    </button>
+  );
+}
+
+function KakaoIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M12 3C6.925 3 2.857 6.358 2.857 10.5c0 2.685 1.607 5.048 4.054 6.488L5.786 21l4.607-2.338C10.944 18.884 11.466 18.929 12 18.929c5.075 0 9.143-3.358 9.143-7.429C21.143 6.358 17.075 3 12 3z"
+        fill="#191919"
+      />
+    </svg>
   );
 }
 
@@ -114,11 +156,12 @@ function GoogleIcon() {
   );
 }
 
-function LoadingSpinner() {
+function LoadingSpinner({ color }: { color: "white" | "dark" }) {
+  const c = color === "dark" ? "#191919" : "currentColor";
   return (
     <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      <circle cx="12" cy="12" r="10" stroke={c} strokeWidth="4" strokeOpacity="0.25" />
+      <path fill={c} fillOpacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
     </svg>
   );
 }

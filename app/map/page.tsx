@@ -19,7 +19,7 @@ const YEARS = [
   { key: "2021", label: "2021년", sub: "2021년 12월" },
   { key: "2019", label: "2019년", sub: "2019년 12월" },
   { key: "2017", label: "2017년", sub: "2017년 11월" },
-  { key: "2015", label: "2015년 ", sub: "2017년 11월" },
+  { key: "2015", label: "2015년 ", sub: "2015년 03월" },
 ];
 
 const ADMIN_EMAIL = "junsik3848@gmail.com";
@@ -149,7 +149,7 @@ export default function MapPage() {
               <input
                 autoFocus
                 type="text"
-                placeholder="저수지 이름 검색..."
+                placeholder="포인트 검색..."
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="flex-1 bg-transparent text-sm text-on-surface placeholder-on-surface-variant/50 outline-none"
@@ -280,8 +280,8 @@ export default function MapPage() {
               <button
                 onClick={() => setMapMode("naver")}
                 className={`w-full text-left px-4 py-3.5 rounded-xl transition-all flex items-center gap-3 ${mapMode === "naver"
-                    ? "bg-surface-tint text-on-primary"
-                    : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40 hover:text-on-surface"
+                  ? "bg-surface-tint text-on-primary"
+                  : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40 hover:text-on-surface"
                   }`}
               >
                 <span className="text-xl">🗺️</span>
@@ -307,8 +307,8 @@ export default function MapPage() {
                         key={type}
                         onClick={() => setMapType(type)}
                         className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${active
-                            ? "bg-surface-tint text-on-primary"
-                            : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40"
+                          ? "bg-surface-tint text-on-primary"
+                          : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40"
                           }`}
                       >
                         {labels[type]}
@@ -322,8 +322,8 @@ export default function MapPage() {
               <button
                 onClick={() => setMapMode("wayback")}
                 className={`w-full text-left px-4 py-3.5 rounded-xl transition-all flex items-center gap-3 ${mapMode === "wayback"
-                    ? "bg-surface-tint text-on-primary"
-                    : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40 hover:text-on-surface"
+                  ? "bg-surface-tint text-on-primary"
+                  : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40 hover:text-on-surface"
                   }`}
               >
                 <span className="text-xl">🛰️</span>
@@ -352,8 +352,8 @@ export default function MapPage() {
                     key={y.key}
                     onClick={() => setYear(y.key)}
                     className={`w-full text-left px-4 py-2.5 rounded-xl text-sm transition-all flex items-center justify-between ${year === y.key
-                        ? "bg-surface-container-highest border border-surface-tint/60 text-on-surface font-bold"
-                        : "text-on-surface-variant hover:text-on-surface"
+                      ? "bg-surface-container-highest border border-surface-tint/60 text-on-surface font-bold"
+                      : "text-on-surface-variant hover:text-on-surface"
                       }`}
                   >
                     <span>{y.label}</span>
@@ -378,8 +378,8 @@ export default function MapPage() {
           <button
             onClick={() => { setSearchOpen(true); setPanelOpen(false); setFavoritesOpen(false); }}
             className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${searchOpen
-                ? "bg-surface-tint text-on-primary"
-                : "bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant/40"
+              ? "bg-surface-tint text-on-primary"
+              : "bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant/40"
               }`}
           >
             <SearchIcon size={19} />
@@ -389,8 +389,8 @@ export default function MapPage() {
           <button
             onClick={() => { setPanelOpen((v) => !v); setFavoritesOpen(false); }}
             className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${panelOpen
-                ? "bg-surface-tint text-on-primary"
-                : "bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant/40"
+              ? "bg-surface-tint text-on-primary"
+              : "bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant/40"
               }`}
           >
             <LayersIcon size={20} />
@@ -401,8 +401,8 @@ export default function MapPage() {
             <button
               onClick={() => { setFavoritesOpen((v) => !v); setPanelOpen(false); }}
               className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${favoritesOpen
-                  ? "bg-surface-tint text-on-primary"
-                  : "bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant/40"
+                ? "bg-surface-tint text-on-primary"
+                : "bg-surface-container-high text-on-surface-variant hover:text-on-surface border border-outline-variant/40"
                 }`}
             >
               <StarIcon
@@ -418,8 +418,8 @@ export default function MapPage() {
             <button
               onClick={() => setEditMode((v) => !v)}
               className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg text-xs font-bold transition-all ${editMode
-                  ? "bg-red-500 text-white"
-                  : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40"
+                ? "bg-red-500 text-white"
+                : "bg-surface-container-high text-on-surface-variant border border-outline-variant/40"
                 }`}
               title={editMode ? "편집 종료" : "핀 편집"}
             >
