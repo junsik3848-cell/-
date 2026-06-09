@@ -8,6 +8,7 @@ import ImageCarousel from "@/components/ImageCarousel";
 import { ArrowLeftIcon, MoreVerticalIcon, HeartIcon, MessageCircleIcon, ShareIcon, BookmarkIcon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
 import FollowButton from "@/components/FollowButton";
+import ReportSheet from "@/components/ReportSheet";
 
 type PostDetail = {
   id: string;
@@ -48,6 +49,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const commentInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -241,7 +243,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                       )}
                       {myUserId !== post?.user_id && (
                         <button
-                          onClick={() => setShowMenu(false)}
+                          onClick={() => { setShowMenu(false); setShowReport(true); }}
                           className="w-full text-left px-4 py-3 text-sm text-on-surface-variant hover:bg-surface-container transition-colors"
                         >
                           신고하기
@@ -375,6 +377,14 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
           )}
         </div>
       </div>
+
+      {showReport && (
+        <ReportSheet
+          postId={id}
+          postType="catch"
+          onClose={() => setShowReport(false)}
+        />
+      )}
 
       <BottomNav />
     </div>

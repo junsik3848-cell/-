@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import ImageCarousel from "@/components/ImageCarousel";
 import { ArrowLeftIcon, MoreVerticalIcon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
+import ReportSheet from "@/components/ReportSheet";
 
 const CATEGORY_LABELS: Record<string, string> = {
   rod: "로드",
@@ -51,6 +52,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
   const [status, setStatus] = useState("selling");
   const [showMenu, setShowMenu] = useState(false);
   const [showStatusSheet, setShowStatusSheet] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isChatting, setIsChatting] = useState(false);
 
@@ -176,7 +178,27 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
               )}
             </div>
           ) : (
-            <div className="w-10" />
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu((v) => !v)}
+                className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
+              >
+                <MoreVerticalIcon size={22} />
+              </button>
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-50" onClick={() => setShowMenu(false)} />
+                  <div className="absolute right-0 top-11 z-50 w-44 glass-panel rounded-xl border border-outline-variant/50 py-1 shadow-xl">
+                    <button
+                      onClick={() => { setShowMenu(false); setShowReport(true); }}
+                      className="w-full text-left px-4 py-3 text-sm text-on-surface-variant hover:bg-surface-container transition-colors"
+                    >
+                      신고하기
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       </header>
@@ -280,6 +302,14 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
             ))}
           </div>
         </>
+      )}
+
+      {showReport && (
+        <ReportSheet
+          postId={id}
+          postType="market"
+          onClose={() => setShowReport(false)}
+        />
       )}
 
       <BottomNav />
