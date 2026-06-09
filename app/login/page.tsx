@@ -112,7 +112,7 @@ export default function LoginPage() {
             <p className="mt-6 text-xs text-outline text-center leading-relaxed">
               계속 진행하면 LUNKER의{" "}
               <span className="text-on-surface-variant">서비스 이용약관</span> 및{" "}
-              <span className="text-on-surface-variant">개인정보 처리방침</span>에 동의한 것으로 간주합니다.
+              <a href="/privacy" className="text-on-surface-variant underline underline-offset-2 hover:text-on-surface transition-colors">개인정보 처리방침</a>에 동의한 것으로 간주합니다.
             </p>
           </>
         )}

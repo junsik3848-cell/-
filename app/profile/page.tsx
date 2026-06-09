@@ -317,6 +317,13 @@ export default function ProfilePage() {
             <button className="w-full text-left px-4 py-3 text-sm text-on-surface hover:bg-surface-container transition-colors flex items-center gap-3">
               계정 설정
             </button>
+            <Link
+              href="/privacy"
+              onClick={() => setShowSettings(false)}
+              className="w-full text-left px-4 py-3 text-sm text-on-surface hover:bg-surface-container transition-colors flex items-center gap-3"
+            >
+              개인정보처리방침
+            </Link>
             <div className="h-px bg-outline-variant/30 my-1" />
             <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-sm text-error hover:bg-surface-container transition-colors flex items-center gap-3">
               <LogOutIcon size={16} />로그아웃
