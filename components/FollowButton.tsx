@@ -37,6 +37,15 @@ export default function FollowButton({
     const supabase = createClient();
     await supabase.from("follows").insert({ follower_id: myUserId, following_id: postUserId });
     setIsFollowing(true);
+    supabase.functions.invoke("send-push", {
+      body: {
+        targetUserId: postUserId,
+        type: "follow",
+        title: "새 팔로워 👤",
+        body: "누군가 회원님을 팔로우하기 시작했어요",
+        url: `/profile/${myUserId}`,
+      },
+    });
   }
 
   return (

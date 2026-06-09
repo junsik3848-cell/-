@@ -110,6 +110,17 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
       await supabase.from("likes").insert({ post_id: id, user_id: myUserId });
       setIsLiked(true);
       setLikesCount((n) => n + 1);
+      if (post && post.user_id !== myUserId) {
+        supabase.functions.invoke("send-push", {
+          body: {
+            targetUserId: post.user_id,
+            type: "like",
+            title: "새 좋아요 ❤️",
+            body: "내 조과에 좋아요가 달렸어요",
+            url: `/post/${id}`,
+          },
+        });
+      }
     }
   }
 
@@ -144,6 +155,19 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
       .single();
     if (newComment) {
       setComments((prev) => [...prev, newComment as unknown as Comment]);
+      if (post && post.user_id !== myUserId) {
+        supabase.functions.invoke("send-push", {
+          body: {
+            targetUserId: post.user_id,
+            type: "comment",
+            title: "새 댓글 🗨️",
+            body: commentText.trim().length > 50
+              ? commentText.trim().slice(0, 50) + "…"
+              : commentText.trim(),
+            url: `/post/${id}`,
+          },
+        });
+      }
     }
     setCommentText("");
     setIsSubmitting(false);

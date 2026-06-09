@@ -7,6 +7,8 @@ import BottomNav from "@/components/BottomNav";
 import { SettingsIcon, LogOutIcon, ShoppingBagIcon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
 import { compressImage } from "@/lib/compress-image";
+import NotificationSettingsSheet from "@/components/NotificationSettingsSheet";
+import { registerServiceWorker } from "@/lib/push";
 
 type UserProfile = {
   id: string;
@@ -49,7 +51,12 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const [showNotifSettings, setShowNotifSettings] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
 
   useEffect(() => {
     async function loadProfile() {
@@ -301,7 +308,10 @@ export default function ProfilePage() {
         <>
           <div className="fixed inset-0 z-50" onClick={() => setShowSettings(false)} />
           <div className="fixed top-14 right-4 z-50 max-w-[200px] glass-panel rounded-xl border border-outline-variant/50 py-2 shadow-xl">
-            <button className="w-full text-left px-4 py-3 text-sm text-on-surface hover:bg-surface-container transition-colors flex items-center gap-3">
+            <button
+              onClick={() => { setShowSettings(false); setShowNotifSettings(true); }}
+              className="w-full text-left px-4 py-3 text-sm text-on-surface hover:bg-surface-container transition-colors flex items-center gap-3"
+            >
               <SettingsIcon size={16} />알림 설정
             </button>
             <button className="w-full text-left px-4 py-3 text-sm text-on-surface hover:bg-surface-container transition-colors flex items-center gap-3">
@@ -313,6 +323,13 @@ export default function ProfilePage() {
             </button>
           </div>
         </>
+      )}
+
+      {showNotifSettings && profile && (
+        <NotificationSettingsSheet
+          userId={profile.id}
+          onClose={() => setShowNotifSettings(false)}
+        />
       )}
 
       <BottomNav />

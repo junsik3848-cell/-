@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeftIcon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
+import NotificationPrompt from "@/components/NotificationPrompt";
+import { getPermissionState, subscribePush, registerServiceWorker } from "@/lib/push";
 
 type Message = {
   id: string;
@@ -31,9 +33,14 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
   const [text, setText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [myUsername, setMyUsername] = useState<string | null>(null);
+  const [showNotifPrompt, setShowNotifPrompt] = useState(false);
+  const hasPromptedRef = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const convUsersRef = useRef<{ user1_id: string; user2_id: string } | null>(null);
+
+  useEffect(() => { registerServiceWorker(); }, []);
 
   useEffect(() => {
     async function load() {
@@ -59,11 +66,11 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
 
       convUsersRef.current = { user1_id: conv.user1_id, user2_id: conv.user2_id };
       const otherId = conv.user1_id === user.id ? conv.user2_id : conv.user1_id;
-      const { data: otherData } = await supabase
-        .from("users")
-        .select("id, username, avatar_url")
-        .eq("id", otherId)
-        .single();
+      const [{ data: otherData }, { data: myData }] = await Promise.all([
+        supabase.from("users").select("id, username, avatar_url").eq("id", otherId).single(),
+        supabase.from("users").select("username").eq("id", user.id).single(),
+      ]);
+      setMyUsername(myData?.username ?? null);
 
       setOther(otherData as OtherUser);
       setMessages((msgs ?? []) as Message[]);
@@ -140,10 +147,38 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
     if (msg) {
       setMessages((prev) => prev.some((m) => m.id === msg.id) ? prev : [...prev, msg as Message]);
     }
+
+    // 상대방에게 푸시 알림 전송
+    const cu = convUsersRef.current;
+    if (cu) {
+      const receiverId = cu.user1_id === myUserId ? cu.user2_id : cu.user1_id;
+      supabase.functions.invoke("send-push", {
+        body: {
+          targetUserId: receiverId,
+          type: "message",
+          title: `${myUsername ?? "누군가"}님의 메시지`,
+          body: content.length > 60 ? content.slice(0, 60) + "…" : content,
+          url: `/messages/${conversationId}`,
+        },
+      });
+    }
+
     setIsSending(false);
+
+    // 첫 메시지 전송 후 알림 허용 프롬프트 (1회만)
+    if (!hasPromptedRef.current) {
+      hasPromptedRef.current = true;
+      const perm = await getPermissionState();
+      if (perm === "default") setShowNotifPrompt(true);
+    }
   }
 
   const avatar = other?.avatar_url ?? `https://picsum.photos/seed/${other?.username ?? "user"}/80/80`;
+
+  async function handleAllowNotif() {
+    if (myUserId) await subscribePush(myUserId);
+    setShowNotifPrompt(false);
+  }
 
   return (
     <div className="fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md flex flex-col bg-background">
@@ -256,6 +291,13 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
           </button>
         </div>
       </div>
+      {showNotifPrompt && (
+        <NotificationPrompt
+          context="message"
+          onAllow={handleAllowNotif}
+          onDismiss={() => setShowNotifPrompt(false)}
+        />
+      )}
     </div>
   );
 }

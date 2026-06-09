@@ -180,6 +180,19 @@ export default function FeedPage() {
         ? { ...p, isLiked: true, likes_count: p.likes_count + 1 }
         : p
       ));
+      // 게시글 작성자에게 푸시 알림
+      const liked = posts.find((p) => p.id === postId);
+      if (liked && liked.user_id !== myUserId) {
+        supabase.functions.invoke("send-push", {
+          body: {
+            targetUserId: liked.user_id,
+            type: "like",
+            title: "새 좋아요 ❤️",
+            body: "내 조과에 좋아요가 달렸어요",
+            url: `/post/${postId}`,
+          },
+        });
+      }
     }
   }
 
