@@ -149,7 +149,6 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
     }
 
     // 상대방에게 푸시 알림 전송
-    const cu = convUsersRef.current;
     if (cu) {
       const receiverId = cu.user1_id === myUserId ? cu.user2_id : cu.user1_id;
       supabase.functions.invoke("send-push", {
