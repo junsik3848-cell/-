@@ -81,11 +81,10 @@ export default function ReportSheet({ postId, postType, onClose }: Props) {
                 <button
                   key={r.label}
                   onClick={() => setSelectedReason(r.label)}
-                  className={`w-full text-left px-4 py-3.5 rounded-xl text-sm font-medium border transition-all ${
-                    selectedReason === r.label
-                      ? "bg-error/10 border-error/50 text-error"
-                      : "bg-surface-container-high border-transparent text-on-surface hover:border-outline-variant/50"
-                  }`}
+                  className={`w-full text-left px-4 py-3.5 rounded-xl text-sm font-medium border transition-all ${selectedReason === r.label
+                    ? "bg-error/10 border-error/50 text-error"
+                    : "bg-surface-container-high border-transparent text-on-surface hover:border-outline-variant/50"
+                    }`}
                 >
                   {r.label}
                   {r.sub && (
@@ -108,9 +107,9 @@ export default function ReportSheet({ postId, postType, onClose }: Props) {
 
         {step === "detail" && (
           <>
-            <h3 className="text-base font-bold text-on-surface mb-1">추가 설명 (선택)</h3>
+            <h3 className="text-base font-bold text-on-surface mb-1">추가 설명</h3>
             <p className="text-xs text-on-surface-variant mb-4">
-              <span className="text-error font-semibold">{selectedReason}</span>으로 신고합니다
+              <span className="text-error font-semibold">{selectedReason}</span>로 신고합니다
             </p>
             <textarea
               rows={4}
