@@ -232,7 +232,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
                 {showMenu && (
                   <>
                     <div className="fixed inset-0 z-50" onClick={() => setShowMenu(false)} />
-                    <div className="absolute right-0 top-11 z-50 w-44 glass-panel rounded-xl border border-outline-variant/50 py-1 shadow-xl">
+                    <div className="absolute right-0 top-11 z-50 w-44 bg-surface-container-highest rounded-xl border border-outline-variant/50 py-1 shadow-xl">
                       {myUserId === post?.user_id && (
                         <button
                           onClick={() => { setShowMenu(false); handleDelete(); }}

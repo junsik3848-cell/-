@@ -160,7 +160,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
               {showMenu && (
                 <>
                   <div className="fixed inset-0 z-50" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 top-11 z-50 w-44 glass-panel rounded-xl border border-outline-variant/50 py-1 shadow-xl">
+                  <div className="absolute right-0 top-11 z-50 w-44 bg-surface-container-highest rounded-xl border border-outline-variant/50 py-1 shadow-xl">
                     <button
                       onClick={() => { setShowMenu(false); setShowStatusSheet(true); }}
                       className="w-full text-left px-4 py-3 text-sm text-on-surface hover:bg-surface-container transition-colors"
@@ -188,7 +188,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
               {showMenu && (
                 <>
                   <div className="fixed inset-0 z-50" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 top-11 z-50 w-44 glass-panel rounded-xl border border-outline-variant/50 py-1 shadow-xl">
+                  <div className="absolute right-0 top-11 z-50 w-44 bg-surface-container-highest rounded-xl border border-outline-variant/50 py-1 shadow-xl">
                     <button
                       onClick={() => { setShowMenu(false); setShowReport(true); }}
                       className="w-full text-left px-4 py-3 text-sm text-on-surface-variant hover:bg-surface-container transition-colors"
