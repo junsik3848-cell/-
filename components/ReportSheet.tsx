@@ -3,12 +3,21 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-const REASONS = [
-  "사기 의심",
-  "허위 정보",
-  "욕설 / 비방",
-  "불법 게시물",
-  "기타",
+type Reason = { label: string; sub?: string };
+
+const CATCH_REASONS: Reason[] = [
+  { label: "스팸 또는 혼동을 야기하는 피드" },
+  { label: "유해하거나 위험한 행위" },
+  { label: "증오 또는 학대하는 피드" },
+  { label: "폭력적 또는 혐오스러운 피드" },
+  { label: "성적인 피드" },
+];
+
+const MARKET_REASONS: Reason[] = [
+  { label: "사기 피해 신고" },
+  { label: "거래 금지 물품 등록", sub: "위험한 물건, 약물, 동물, 독성물질" },
+  { label: "부적절한 행위 또는 중고거래 목적이 아닌 글" },
+  { label: "전문 판매업자" },
 ];
 
 type Props = {
@@ -20,6 +29,7 @@ type Props = {
 type Step = "reason" | "detail" | "done";
 
 export default function ReportSheet({ postId, postType, onClose }: Props) {
+  const reasons = postType === "market" ? MARKET_REASONS : CATCH_REASONS;
   const [step, setStep] = useState<Step>("reason");
   const [selectedReason, setSelectedReason] = useState("");
   const [detail, setDetail] = useState("");
@@ -58,8 +68,8 @@ export default function ReportSheet({ postId, postType, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-black/50" onClick={step !== "done" ? onClose : undefined} />
-      <div className="fixed bottom-0 left-0 right-0 z-50 max-w-md mx-auto bg-surface-container rounded-t-2xl border-t border-outline-variant/50 p-5 pb-8">
+      <div className="fixed inset-0 z-[60] bg-black/50" onClick={step !== "done" ? onClose : undefined} />
+      <div className="fixed bottom-0 left-0 right-0 z-[60] max-w-md mx-auto bg-surface-container rounded-t-2xl border-t border-outline-variant/50 p-5 pb-8">
         <div className="w-10 h-1 bg-outline-variant rounded-full mx-auto mb-5" />
 
         {step === "reason" && (
@@ -67,17 +77,22 @@ export default function ReportSheet({ postId, postType, onClose }: Props) {
             <h3 className="text-base font-bold text-on-surface mb-1">신고 사유 선택</h3>
             <p className="text-xs text-on-surface-variant mb-4">해당하는 사유를 선택해 주세요</p>
             <div className="space-y-2">
-              {REASONS.map((r) => (
+              {reasons.map((r) => (
                 <button
-                  key={r}
-                  onClick={() => setSelectedReason(r)}
+                  key={r.label}
+                  onClick={() => setSelectedReason(r.label)}
                   className={`w-full text-left px-4 py-3.5 rounded-xl text-sm font-medium border transition-all ${
-                    selectedReason === r
+                    selectedReason === r.label
                       ? "bg-error/10 border-error/50 text-error"
                       : "bg-surface-container-high border-transparent text-on-surface hover:border-outline-variant/50"
                   }`}
                 >
-                  {r}
+                  {r.label}
+                  {r.sub && (
+                    <span className={`block text-xs mt-0.5 font-normal ${selectedReason === r.label ? "text-error/70" : "text-on-surface-variant"}`}>
+                      {r.sub}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
